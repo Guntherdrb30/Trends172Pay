@@ -32,12 +32,12 @@ function requireRootAuth(request: NextRequest): NextResponse | null {
 // Devuelve el detalle de un MerchantApp concreto.
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authError = requireRootAuth(request);
   if (authError) return authError;
 
-  const { id } = context.params;
+  const { id } = await params;
   const merchant = await getMerchantById(id);
   if (!merchant) {
     return NextResponse.json(
@@ -57,12 +57,12 @@ export async function GET(
 // - Configuración técnica
 export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authError = requireRootAuth(request);
   if (authError) return authError;
 
-  const { id } = context.params;
+  const { id } = await params;
 
   try {
     const existing = await getMerchantById(id);
@@ -136,4 +136,3 @@ export async function PATCH(
     );
   }
 }
-

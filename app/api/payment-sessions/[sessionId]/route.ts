@@ -9,9 +9,9 @@ import { getMerchantById } from "@/lib/merchantAppStore";
 // poder mostrar logo y nombre comercial en el checkout.
 export async function GET(
   _request: NextRequest,
-  context: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
-  const { sessionId } = context.params;
+  const { sessionId } = await params;
 
   if (!sessionId) {
     return NextResponse.json(
@@ -40,4 +40,3 @@ export async function GET(
 
   return NextResponse.json({ session, merchant: merchantSummary });
 }
-

@@ -30,12 +30,12 @@ function requireRootAuth(request: NextRequest): NextResponse | null {
 // invalida inmediatamente la integración anterior.
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authError = requireRootAuth(request);
   if (authError) return authError;
 
-  const { id } = context.params;
+  const { id } = await params;
 
   try {
     const updated = await regenerateApiKey(id);
@@ -61,4 +61,3 @@ export async function POST(
     );
   }
 }
-

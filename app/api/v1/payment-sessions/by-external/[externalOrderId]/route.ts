@@ -36,16 +36,16 @@ async function getAuthenticatedMerchant(request: NextRequest): Promise<{
 // GET /api/v1/payment-sessions/by-external/[externalOrderId]
 // Devuelve todas las sesiones de pago de un MerchantApp concreto
 // asociadas al mismo externalOrderId. Útil para que las plataformas
-// reconciliEN pedidos externos con múltiples intentos de pago.
+// reconcilien pedidos externos con múltiples intentos de pago.
 export async function GET(
   request: NextRequest,
-  context: { params: { externalOrderId: string } }
+  { params }: { params: Promise<{ externalOrderId: string }> }
 ) {
   try {
     const { merchant, response } = await getAuthenticatedMerchant(request);
     if (!merchant) return response!;
 
-    const { externalOrderId } = context.params;
+    const { externalOrderId } = await params;
     if (!externalOrderId) {
       return NextResponse.json(
         { error: "Falta el parámetro externalOrderId en la ruta." },
