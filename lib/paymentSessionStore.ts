@@ -20,14 +20,30 @@ function generateId(): string {
   return `ps_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }
 
+// Datos mínimos necesarios para crear una PaymentSession desde la capa de
+// aplicación. La comisión y el businessCode se calculan internamente a partir
+// del MerchantApp asociado.
+export interface CreateSessionInput {
+  merchantAppId: string;
+  originSystem: string;
+  amount: number;
+  currency: string;
+  description: string;
+  customerName?: string;
+  customerEmail?: string;
+  successUrl: string;
+  cancelUrl: string;
+  externalOrderId?: string;
+  bankPaymentId?: string;
+  status?: PaymentStatus;
+}
+
 // Crea una nueva PaymentSession en memoria.
 // - Busca el MerchantApp correspondiente (por merchantAppId).
 // - Calcula la comisión de trends172 y el neto del negocio usando calculateFees.
 // - Asocia la sesión al negocio vía merchantAppId y businessCode.
 export async function createSession(
-  input: Omit<PaymentSession, "id" | "createdAt" | "updatedAt" | "status"> & {
-    status?: PaymentStatus;
-  }
+  input: CreateSessionInput
 ): Promise<PaymentSession> {
   const merchant: MerchantApp | null = await getMerchantById(
     input.merchantAppId

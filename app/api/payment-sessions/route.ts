@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
 
     const session = await createSession({
       merchantAppId: merchant.id,
-      businessCode: merchant.businessCode,
       originSystem,
       amount,
       currency,
@@ -90,4 +89,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
