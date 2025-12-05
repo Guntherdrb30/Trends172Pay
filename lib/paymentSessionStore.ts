@@ -3,14 +3,9 @@ import {
   PaymentStatus,
   MerchantApp
 } from "@/types/payment";
+import { db } from "@/lib/db";
 import { calculateFees } from "./fees";
 import { getMerchantById } from "./merchantAppStore";
-
-// Almacenamiento en memoria de PaymentSession.
-// Cada sesión de pago está asociada a un MerchantApp específico mediante:
-// - merchantAppId (referencia directa)
-// - businessCode (para filtros / reportes rápidos)
-const paymentSessions: PaymentSession[] = [];
 
 function generateId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -20,9 +15,6 @@ function generateId(): string {
   return `ps_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }
 
-// Datos mínimos necesarios para crear una PaymentSession desde la capa de
-// aplicación. La comisión y el businessCode se calculan internamente a partir
-// del MerchantApp asociado.
 export interface CreateSessionInput {
   merchantAppId: string;
   originSystem: string;
@@ -38,10 +30,33 @@ export interface CreateSessionInput {
   status?: PaymentStatus;
 }
 
-// Crea una nueva PaymentSession en memoria.
-// - Busca el MerchantApp correspondiente (por merchantAppId).
-// - Calcula la comisión de trends172 y el neto del negocio usando calculateFees.
-// - Asocia la sesión al negocio vía merchantAppId y businessCode.
+function mapRowToSession(row: any): PaymentSession {
+  return {
+    id: row.id,
+    merchantAppId: row.merchant_app_id,
+    businessCode: row.business_code,
+    originSystem: row.origin_system,
+    amount: Number(row.amount),
+    currency: row.currency,
+    platformFeeAmount: Number(row.platform_fee_amount),
+    merchantNetAmount: Number(row.merchant_net_amount),
+    description: row.description,
+    status: row.status as PaymentStatus,
+    customerName: row.customer_name ?? undefined,
+    customerEmail: row.customer_email ?? undefined,
+    successUrl: row.success_url,
+    cancelUrl: row.cancel_url,
+    externalOrderId: row.external_order_id ?? undefined,
+    bankPaymentId: row.bank_payment_id ?? undefined,
+    createdAt: row.created_at?.toISOString
+      ? row.created_at.toISOString()
+      : String(row.created_at),
+    updatedAt: row.updated_at?.toISOString
+      ? row.updated_at.toISOString()
+      : String(row.updated_at)
+  };
+}
+
 export async function createSession(
   input: CreateSessionInput
 ): Promise<PaymentSession> {
@@ -61,62 +76,80 @@ export async function createSession(
 
   const now = new Date().toISOString();
   const status: PaymentStatus = input.status ?? "pending";
+  const id = generateId();
 
-  const session: PaymentSession = {
-    id: generateId(),
+  const rows = await db`
+    INSERT INTO payment_sessions (
+      id,
+      merchant_app_id,
+      business_code,
+      origin_system,
+      amount,
+      currency,
+      platform_fee_amount,
+      merchant_net_amount,
+      description,
+      status,
+      customer_name,
+      customer_email,
+      success_url,
+      cancel_url,
+      external_order_id,
+      bank_payment_id,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      ${id},
+      ${merchant.id},
+      ${merchant.businessCode},
+      ${input.originSystem},
+      ${input.amount},
+      ${input.currency},
+      ${platformFeeAmount},
+      ${merchantNetAmount},
+      ${input.description},
+      ${status},
+      ${input.customerName ?? null},
+      ${input.customerEmail ?? null},
+      ${input.successUrl},
+      ${input.cancelUrl},
+      ${input.externalOrderId ?? null},
+      ${input.bankPaymentId ?? null},
+      ${now}::timestamptz,
+      ${now}::timestamptz
+    )
+    RETURNING *
+  `;
 
-    // Asociación fuerte a MerchantApp.
-    merchantAppId: merchant.id,
-    businessCode: merchant.businessCode,
-
-    originSystem: input.originSystem,
-    amount: input.amount,
-    currency: input.currency,
-
-    // La comisión depende del tipo de negocio:
-    // usamos merchant.commissionPercent para obtener la parte de trends172
-    // (platformFeeAmount) y el neto para el cliente (merchantNetAmount).
-    platformFeeAmount,
-    merchantNetAmount,
-
-    description: input.description,
-    status,
-
-    customerName: input.customerName,
-    customerEmail: input.customerEmail,
-    successUrl: input.successUrl,
-    cancelUrl: input.cancelUrl,
-    externalOrderId: input.externalOrderId,
-    bankPaymentId: input.bankPaymentId,
-
-    createdAt: now,
-    updatedAt: now
-  };
-
-  paymentSessions.push(session);
-  return session;
+  return mapRowToSession(rows[0]);
 }
 
 export async function getSessionById(
   id: string
 ): Promise<PaymentSession | null> {
-  const session = paymentSessions.find((s) => s.id === id);
-  return session ?? null;
+  const rows = await db`
+    SELECT *
+    FROM payment_sessions
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+
+  if (!rows[0]) return null;
+  return mapRowToSession(rows[0]);
 }
 
 export async function updateSession(
   id: string,
   partial: Partial<PaymentSession>
 ): Promise<PaymentSession> {
-  const index = paymentSessions.findIndex((s) => s.id === id);
-  if (index === -1) {
+  const existing = await getSessionById(id);
+  if (!existing) {
     throw new Error(`PaymentSession con id "${id}" no encontrada.`);
   }
 
-  const existing = paymentSessions[index];
   const now = new Date().toISOString();
-
-  const updated: PaymentSession = {
+  const merged: PaymentSession = {
     ...existing,
     ...partial,
     id: existing.id,
@@ -126,14 +159,41 @@ export async function updateSession(
     updatedAt: now
   };
 
-  paymentSessions[index] = updated;
-  return updated;
+  const rows = await db`
+    UPDATE payment_sessions
+    SET
+      origin_system = ${merged.originSystem},
+      amount = ${merged.amount},
+      currency = ${merged.currency},
+      platform_fee_amount = ${merged.platformFeeAmount},
+      merchant_net_amount = ${merged.merchantNetAmount},
+      description = ${merged.description},
+      status = ${merged.status},
+      customer_name = ${merged.customerName ?? null},
+      customer_email = ${merged.customerEmail ?? null},
+      success_url = ${merged.successUrl},
+      cancel_url = ${merged.cancelUrl},
+      external_order_id = ${merged.externalOrderId ?? null},
+      bank_payment_id = ${merged.bankPaymentId ?? null},
+      updated_at = ${now}::timestamptz
+    WHERE id = ${id}
+    RETURNING *
+  `;
+
+  return mapRowToSession(rows[0]);
 }
 
 export async function listSessionsByBusinessCode(
   code: string
 ): Promise<PaymentSession[]> {
-  return paymentSessions.filter((s) => s.businessCode === code);
+  const rows = await db`
+    SELECT *
+    FROM payment_sessions
+    WHERE business_code = ${code}
+    ORDER BY created_at DESC
+  `;
+
+  return rows.map(mapRowToSession);
 }
 
 export async function listSessions(filters?: {
@@ -144,42 +204,59 @@ export async function listSessions(filters?: {
   toDate?: string;
 }): Promise<PaymentSession[]> {
   if (!filters) {
-    return [...paymentSessions];
+    const rows = await db`
+      SELECT *
+      FROM payment_sessions
+      ORDER BY created_at DESC
+    `;
+    return rows.map(mapRowToSession);
   }
 
   const { businessCode, originSystem, status, fromDate, toDate } = filters;
-  let result = [...paymentSessions];
+
+  const conditions: string[] = [];
+  const params: any[] = [];
 
   if (businessCode) {
-    result = result.filter((s) => s.businessCode === businessCode);
+    conditions.push(`business_code = $${conditions.length + 1}`);
+    params.push(businessCode);
   }
 
   if (originSystem) {
-    result = result.filter((s) => s.originSystem === originSystem);
+    conditions.push(`origin_system = $${conditions.length + 1}`);
+    params.push(originSystem);
   }
 
   if (status) {
-    result = result.filter((s) => s.status === status);
+    conditions.push(`status = $${conditions.length + 1}`);
+    params.push(status);
   }
 
   if (fromDate) {
-    const from = new Date(fromDate);
-    if (!Number.isNaN(from.getTime())) {
-      result = result.filter(
-        (s) => new Date(s.createdAt).getTime() >= from.getTime()
-      );
-    }
+    conditions.push(`created_at >= $${conditions.length + 1}`);
+    params.push(fromDate);
   }
 
   if (toDate) {
-    const to = new Date(toDate);
-    if (!Number.isNaN(to.getTime())) {
-      result = result.filter(
-        (s) => new Date(s.createdAt).getTime() <= to.getTime()
-      );
-    }
+    conditions.push(`created_at <= $${conditions.length + 1}`);
+    params.push(toDate);
   }
 
-  return result;
+  const whereClause =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+  // Usamos una plantilla dinámica simple: @neondatabase/serverless
+  // no soporta parametrización posicional con $n fácilmente, así que
+  // construimos la consulta mediante un join manual.
+  const query = `
+    SELECT *
+    FROM payment_sessions
+    ${whereClause}
+    ORDER BY created_at DESC
+  `;
+
+  const rows = await db(query, params as any);
+
+  return rows.map(mapRowToSession);
 }
 
