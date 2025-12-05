@@ -59,7 +59,7 @@ Las carpetas `lib/`, `types/`, `app/api/` y `app/admin/` ya contienen:
   - `MerchantApp`
   - `PaymentSession`
   - `PaymentStatus`
-- Stores en memoria:
+- Repositorios persistentes sobre PostgreSQL (Neon):
   - `merchantAppStore`
   - `paymentSessionStore`
 - Un helper de comisiones:
@@ -195,7 +195,7 @@ Si la API key falta o no es válida, la API responde con `401`.
    - Busca sesiones de pago asociadas a un `externalOrderId` concreto (por ejemplo, el ID de pedido en tu e‑commerce), filtradas por el `MerchantApp` autenticado.
    - Devuelve `{ sessions: [...] }` o `404` si no se encuentra ninguna sesión para ese `externalOrderId`.
 
-Con estos endpoints ya puedes empezar a integrar trends172 Pay desde aplicaciones externas usando sesiones de pago simuladas en memoria.
+Con estos endpoints ya puedes empezar a integrar trends172 Pay desde aplicaciones externas usando sesiones de pago persistidas en base de datos.
 
 ---
 
@@ -204,7 +204,7 @@ Con estos endpoints ya puedes empezar a integrar trends172 Pay desde aplicacione
 Implementado a día de hoy:
 
 - Modelos de dominio básicos (`MerchantApp`, `PaymentSession`, `PaymentStatus`).
-- Stores en memoria (`merchantAppStore`, `paymentSessionStore`).
+- Repositorios sobre PostgreSQL (`merchantAppStore`, `paymentSessionStore`) usando Neon.
 - Cálculo de comisiones por sesión (`calculateFees`).
 - Dashboard root inicial con:
   - Login protegido por `ROOT_DASHBOARD_TOKEN`.
@@ -213,8 +213,7 @@ Implementado a día de hoy:
 
 Siguientes pasos naturales:
 
-- Persistencia en base de datos real (por ejemplo, PostgreSQL).
+- Mejoras futuras en la capa de persistencia y reporting.
 - Integración con el banco / proveedor de pagos.
 - Webhooks firmados para notificar cambios de estado de pago.
 - Mejorar el dashboard con más métricas, filtros y exportaciones.
-
