@@ -33,58 +33,43 @@ async function getAuthenticatedMerchant(request: NextRequest): Promise<{
   return { merchant, response: null };
 }
 
-// GET /api/v1/payment-sessions/[id]
-// Devuelve el detalle de una PaymentSession siempre y cuando
-// pertenezca al MerchantApp autenticado por x-api-key.
-// Esta es parte de la API sencilla para integradores externos.
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: { id: string } }
 ) {
   try {
     const { merchant, response } = await getAuthenticatedMerchant(request);
     if (!merchant) return response!;
 
-    const { id } = await params;
-    if (!id) {
-      return NextResponse.json(
-        { error: "Falta el parámetro id en la ruta." },
-        { status: 400 }
-      );
-    }
-
+    const { id } = context.params;
     const session = await getSessionById(id);
-    if (!session || session.merchantAppId !== merchant.id) {
-      // Se responde 404 para no filtrar la existencia de sesiones
-      // de otros merchants.
+
+    if (!session || session.businessCode !== merchant.businessCode) {
       return NextResponse.json(
-        { error: `PaymentSession con id "${id}" no encontrada.` },
+        { error: "PaymentSession no encontrada." },
         { status: 404 }
       );
     }
 
-    // Solo se devuelve información relacionada al pago; no hay datos
-    // sensibles de integración bancaria en la entidad PaymentSession.
-    const payload = {
-      id: session.id,
-      businessCode: session.businessCode,
-      originSystem: session.originSystem,
-      amount: session.amount,
-      currency: session.currency,
-      description: session.description,
-      status: session.status,
-      platformFeeAmount: session.platformFeeAmount,
-      merchantNetAmount: session.merchantNetAmount,
-      customerName: session.customerName,
-      customerEmail: session.customerEmail,
-      externalOrderId: session.externalOrderId,
-      successUrl: session.successUrl,
-      cancelUrl: session.cancelUrl,
-      createdAt: session.createdAt,
-      updatedAt: session.updatedAt
-    };
-
-    return NextResponse.json({ session: payload });
+    return NextResponse.json({
+      session: {
+        id: session.id,
+        businessCode: session.businessCode,
+        originSystem: session.originSystem,
+        amount: session.amount,
+        currency: session.currency,
+        status: session.status,
+        platformFeeAmount: session.platformFeeAmount,
+        merchantNetAmount: session.merchantNetAmount,
+        externalOrderId: session.externalOrderId,
+        successUrl: session.successUrl,
+        cancelUrl: session.cancelUrl,
+        customerName: session.customerName,
+        customerEmail: session.customerEmail,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt
+      }
+    });
   } catch (error) {
     console.error("Error en GET /api/v1/payment-sessions/[id]:", error);
     return NextResponse.json(
@@ -93,3 +78,4 @@ export async function GET(
     );
   }
 }
+

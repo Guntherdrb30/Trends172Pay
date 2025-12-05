@@ -33,35 +33,32 @@ async function getAuthenticatedMerchant(request: NextRequest): Promise<{
   return { merchant, response: null };
 }
 
-// GET /api/v1/payment-sessions/by-external/[externalOrderId]
-// Devuelve todas las sesiones de pago de un MerchantApp concreto
-// asociadas al mismo externalOrderId. Útil para que las plataformas
-// reconcilien pedidos externos con múltiples intentos de pago.
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ externalOrderId: string }> }
+  context: { params: { externalOrderId: string } }
 ) {
   try {
     const { merchant, response } = await getAuthenticatedMerchant(request);
     if (!merchant) return response!;
 
-    const { externalOrderId } = await params;
-    if (!externalOrderId) {
-      return NextResponse.json(
-        { error: "Falta el parámetro externalOrderId en la ruta." },
-        { status: 400 }
-      );
-    }
+    const externalOrderId = context.params.externalOrderId;
 
-    const allForMerchant = await listSessions({
+    const sessions = await listSessions({
       businessCode: merchant.businessCode
     });
 
-    const filtered = allForMerchant.filter(
+    const filtered = sessions.filter(
       (s) => s.externalOrderId === externalOrderId
     );
 
-    const sessions = filtered.map((s) => ({
+    if (filtered.length === 0) {
+      return NextResponse.json(
+        { error: "No se encontraron PaymentSessions para ese externalOrderId." },
+        { status: 404 }
+      );
+    }
+
+    const items = filtered.map((s) => ({
       id: s.id,
       businessCode: s.businessCode,
       originSystem: s.originSystem,
@@ -74,19 +71,14 @@ export async function GET(
       createdAt: s.createdAt
     }));
 
-    // Se devuelve siempre un array (que puede estar vacío) para
-    // facilitar el consumo desde distintas tecnologías.
-    return NextResponse.json({ sessions });
+    return NextResponse.json({ sessions: items });
   } catch (error) {
     console.error(
       "Error en GET /api/v1/payment-sessions/by-external/[externalOrderId]:",
       error
     );
     return NextResponse.json(
-      {
-        error:
-          "Error interno al obtener las sesiones de pago por externalOrderId."
-      },
+      { error: "Error interno al buscar sesiones por externalOrderId." },
       { status: 500 }
     );
   }
