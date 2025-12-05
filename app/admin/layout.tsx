@@ -24,6 +24,12 @@ export default function AdminLayout({
           >
             Sesiones de pago
           </Link>
+          <a
+            href="/api/admin/logout"
+            className="block rounded-md px-3 py-2 text-slate-400 hover:bg-slate-900/80 hover:text-slate-50"
+          >
+            Cerrar sesión
+          </a>
         </nav>
       </aside>
       <section className="flex-1">
@@ -32,4 +38,3 @@ export default function AdminLayout({
     </div>
   );
 }
-

@@ -7,6 +7,7 @@ import {
 function requireRootAuth(request: NextRequest): NextResponse | null {
   const expected = process.env.ROOT_DASHBOARD_TOKEN;
   const provided = request.headers.get("x-root-token");
+  const session = request.cookies.get("admin_session")?.value;
 
   if (!expected) {
     return NextResponse.json(
@@ -18,7 +19,10 @@ function requireRootAuth(request: NextRequest): NextResponse | null {
     );
   }
 
-  if (!provided || provided !== expected) {
+  const headerValid = !!provided && provided === expected;
+  const sessionValid = session === "active";
+
+  if (!headerValid && !sessionValid) {
     return NextResponse.json(
       { error: "Acceso no autorizado al dashboard root." },
       { status: 401 }
@@ -136,3 +140,4 @@ export async function PATCH(
     );
   }
 }
+

@@ -1,11 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 
+function requireRootAuth(request: NextRequest): NextResponse | null {
+  const expected = process.env.ROOT_DASHBOARD_TOKEN;
+  const provided = request.headers.get("x-root-token");
+  const session = request.cookies.get("admin_session")?.value;
+
+  if (!expected) {
+    return NextResponse.json(
+      {
+        error:
+          "ROOT_DASHBOARD_TOKEN no está configurado en el entorno del servidor."
+      },
+      { status: 500 }
+    );
+  }
+
+  const headerValid = !!provided && provided === expected;
+  const sessionValid = session === "active";
+
+  if (!headerValid && !sessionValid) {
+    return NextResponse.json(
+      { error: "Acceso no autorizado al dashboard root." },
+      { status: 401 }
+    );
+  }
+
+  return null;
+}
+
 // POST /api/admin/onboarding/test-webhook
 // Stub para el asistente de conexión inteligente.
 // Simula el envío de un webhook de prueba al backend del cliente.
 // En el futuro, aquí se utilizará webhookNotifier.ts y se hará una
 // llamada HTTP real al webhookUrl configurado.
 export async function POST(request: NextRequest) {
+  const authError = requireRootAuth(request);
+  if (authError) return authError;
+
   try {
     const body = await request.json().catch(() => null);
     const webhookUrl = body?.webhookUrl as string | undefined;
@@ -53,4 +84,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
