@@ -35,13 +35,13 @@ async function getAuthenticatedMerchant(request: NextRequest): Promise<{
 
 export async function GET(
   request: NextRequest,
-  context: { params: { externalOrderId: string } }
+  { params }: { params: Promise<{ externalOrderId: string }> }
 ) {
   try {
     const { merchant, response } = await getAuthenticatedMerchant(request);
     if (!merchant) return response!;
 
-    const externalOrderId = context.params.externalOrderId;
+    const { externalOrderId } = await params;
 
     const sessions = await listSessions({
       businessCode: merchant.businessCode
@@ -83,4 +83,3 @@ export async function GET(
     );
   }
 }
-

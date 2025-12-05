@@ -35,13 +35,13 @@ async function getAuthenticatedMerchant(request: NextRequest): Promise<{
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { merchant, response } = await getAuthenticatedMerchant(request);
     if (!merchant) return response!;
 
-    const { id } = context.params;
+    const { id } = await params;
     const session = await getSessionById(id);
 
     if (!session || session.businessCode !== merchant.businessCode) {
@@ -78,4 +78,3 @@ export async function GET(
     );
   }
 }
-

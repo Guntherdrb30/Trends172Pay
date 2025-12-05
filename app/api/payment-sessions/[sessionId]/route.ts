@@ -22,10 +22,10 @@ type CheckoutResponse = {
 // asociado (si existe).
 export async function GET(
   _request: NextRequest,
-  context: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const { sessionId } = context.params;
+    const { sessionId } = await params;
 
     const session = await getSessionById(sessionId);
     if (!session) {
