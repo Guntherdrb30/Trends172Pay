@@ -11,12 +11,12 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminLoginPage({
+export default async function AdminLoginPage({
   searchParams
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const session = cookieStore.get("admin_session")?.value;
 
   if (session === "active") {
