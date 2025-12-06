@@ -30,6 +30,11 @@ export interface MerchantApp {
   contactEmail?: string;
   notes?: string;
 
+  // Autenticación y Saldo (Nuevo)
+  email?: string; // Para login
+  passwordHash?: string; // Para login
+  balanceCurrency?: string; // Moneda principal del saldo (generalmente USD)
+
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }

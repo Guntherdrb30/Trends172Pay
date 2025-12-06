@@ -32,6 +32,7 @@ export default function CheckoutClient() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "mobile">("card");
 
   useEffect(() => {
     if (!sessionId) {
@@ -192,14 +193,49 @@ export default function CheckoutClient() {
           </>
         ) : null}
 
-        <div className="pt-2">
-          <Button
-            className="w-full"
-            disabled={loading || !!error || isRedirecting}
-            onClick={handleProceedToPayment}
-          >
-            {isRedirecting ? "Redirigiendo al banco..." : "Proceder al pago"}
-          </Button>
+        <div className="pt-2 space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setPaymentMethod("card")}
+              className={`rounded-md border p-2 text-sm font-medium transition-colors ${paymentMethod === "card"
+                  ? "border-slate-50 bg-slate-800 text-slate-50"
+                  : "border-slate-800 bg-transparent text-slate-400 hover:border-slate-700"
+                }`}
+            >
+              Tarjeta (Mercantil)
+            </button>
+            <button
+              onClick={() => setPaymentMethod("mobile")}
+              className={`rounded-md border p-2 text-sm font-medium transition-colors ${paymentMethod === "mobile"
+                  ? "border-slate-50 bg-slate-800 text-slate-50"
+                  : "border-slate-800 bg-transparent text-slate-400 hover:border-slate-700"
+                }`}
+            >
+              Pago Móvil
+            </button>
+          </div>
+
+          {paymentMethod === "mobile" ? (
+            <div className="rounded-md bg-slate-900 p-4 text-sm text-slate-300">
+              <p className="font-semibold text-slate-50 mb-2">Datos para Pago Móvil:</p>
+              <ul className="list-disc pl-4 space-y-1 text-xs">
+                <li>Banco: 0105 - Mercantil</li>
+                <li>Teléfono: 0414-1234567</li>
+                <li>C.I. / RIF: J-12345678-9</li>
+              </ul>
+              <p className="mt-3 text-xs text-yellow-500">
+                * Funcionalidad de reporte automático en construcción.
+              </p>
+            </div>
+          ) : (
+            <Button
+              className="w-full"
+              disabled={loading || !!error || isRedirecting}
+              onClick={handleProceedToPayment}
+            >
+              {isRedirecting ? "Redirigiendo al banco..." : "Pagar con Tarjeta"}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

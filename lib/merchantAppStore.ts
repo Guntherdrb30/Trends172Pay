@@ -43,6 +43,9 @@ function mapRowToMerchant(row: any): MerchantApp {
     contactName: row.contact_name ?? undefined,
     contactEmail: row.contact_email ?? undefined,
     notes: row.notes ?? undefined,
+    email: row.email ?? undefined,
+    passwordHash: row.password_hash ?? undefined,
+    balanceCurrency: row.balance_currency ?? "USD",
     createdAt: row.created_at?.toISOString
       ? row.created_at.toISOString()
       : String(row.created_at),
@@ -181,6 +184,20 @@ export async function getMerchantByBusinessCode(
   return mapRowToMerchant(rows[0]);
 }
 
+export async function getMerchantByEmail(
+  email: string
+): Promise<MerchantApp | null> {
+  const rows = await db`
+    SELECT *
+    FROM merchant_apps
+    WHERE email = ${email}
+    LIMIT 1
+  `;
+
+  if (!rows[0]) return null;
+  return mapRowToMerchant(rows[0]);
+}
+
 export async function createMerchant(
   data: Omit<MerchantApp, "id" | "apiKey" | "createdAt" | "updatedAt">
 ): Promise<MerchantApp> {
@@ -221,6 +238,9 @@ export async function createMerchant(
       contact_name,
       contact_email,
       notes,
+      email,
+      password_hash,
+      balance_currency,
       created_at,
       updated_at
     )
@@ -242,6 +262,9 @@ export async function createMerchant(
       ${data.contactName ?? null},
       ${data.contactEmail ?? null},
       ${data.notes ?? null},
+      ${data.email ?? null},
+      ${data.passwordHash ?? null},
+      ${data.balanceCurrency ?? "USD"},
       ${now}::timestamptz,
       ${now}::timestamptz
     )

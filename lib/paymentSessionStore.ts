@@ -260,3 +260,14 @@ export async function listSessions(filters?: {
   return rows.map(mapRowToSession);
 }
 
+export async function getMerchantBalance(merchantAppId: string): Promise<number> {
+  const rows = await db`
+    SELECT COALESCE(SUM(merchant_net_amount), 0) as total
+    FROM payment_sessions
+    WHERE merchant_app_id = ${merchantAppId}
+      AND status = 'paid'
+  `;
+
+  return Number(rows[0].total);
+}
+
