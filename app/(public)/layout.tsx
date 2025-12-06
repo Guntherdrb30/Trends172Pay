@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PublicLayout({
     children
 }: {
@@ -7,9 +9,11 @@ export default function PublicLayout({
         <div className="flex min-h-screen flex-col">
             <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
                 <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-                    <span className="text-lg font-bold tracking-tight text-slate-100">
-                        trends172 <span className="text-indigo-400">Pay</span>
-                    </span>
+                    <Link href="/" className="inline-flex items-center">
+                        <span className="text-lg font-bold tracking-tight text-slate-100">
+                            trends172 <span className="text-indigo-400">Pay</span>
+                        </span>
+                    </Link>
                     <nav className="flex items-center gap-4">
                         <a href="/login" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
                             Iniciar Sesión

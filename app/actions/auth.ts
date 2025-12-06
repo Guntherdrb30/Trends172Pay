@@ -4,6 +4,7 @@ import { createMerchant, getMerchantByEmail } from "@/lib/merchantAppStore";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { sendWelcomeEmail, sendLoginAlert } from "@/lib/email";
 
 // Duración de la sesión: 7 días
 const SESSION_DURATION = 60 * 60 * 24 * 7;
@@ -50,6 +51,9 @@ export async function signup(prevState: any, formData: FormData) {
             path: "/",
         });
 
+        // Enviar email de bienvenida (async, no bloquear)
+        sendWelcomeEmail(email, businessName).catch(e => console.error("Email error not blocking flow:", e));
+
     } catch (error: any) {
         console.error("Signup error:", error);
         return { error: error.message || "Error al crear la cuenta." };
@@ -85,6 +89,9 @@ export async function login(prevState: any, formData: FormData) {
             maxAge: SESSION_DURATION,
             path: "/",
         });
+
+        // Enviar alerta de inicio de sesión (async)
+        sendLoginAlert(email).catch(e => console.error("Email error not blocking flow:", e));
 
     } catch (error) {
         console.error("Login error:", error);

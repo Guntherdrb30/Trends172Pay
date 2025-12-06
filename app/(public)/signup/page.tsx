@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { signup } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert } from "@/components/ui/alert";
+import { PasswordInput } from "@/components/ui/password-input";
 import Link from "next/link";
 
 export default function SignupPage() {
@@ -51,12 +51,10 @@ export default function SignupPage() {
                             <label htmlFor="password" className="text-sm font-medium leading-none text-slate-200">
                                 Contraseña
                             </label>
-                            <input
+                            <PasswordInput
                                 id="password"
                                 name="password"
-                                type="password"
                                 required
-                                className="flex h-10 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                             />
                         </div>
 
