@@ -6,8 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Suspense } from "react";
 
-export default function DemoSuccessPage() {
+function SuccessContent() {
     const searchParams = useSearchParams();
     const amountParam = searchParams.get("amount");
     const methodParam = searchParams.get("method");
@@ -127,5 +128,13 @@ export default function DemoSuccessPage() {
                 Este es un comprobante de demostración generado automáticamente por trends172 Pay.
             </p>
         </div>
+    );
+}
+
+export default function DemoSuccessPage() {
+    return (
+        <Suspense fallback={<div className="text-center p-12 text-slate-500">Cargando recibo...</div>}>
+            <SuccessContent />
+        </Suspense>
     );
 }
