@@ -29,9 +29,10 @@ export function CheckoutDemo() {
 
         // Simulate network delay
         setTimeout(() => {
-            // Simulate success
-            window.location.href = "/pay/demo/result/success";
-        }, 2000);
+            // Redirigir a vista de Revisión (Review) para confirmar comisión
+            const methodLabel = paymentMethod === 'card' ? 'Tarjeta' : paymentMethod === 'mobile' ? 'Pago Móvil' : 'Banco Mercantil';
+            window.location.href = `/pay/demo/review?amount=${amount}&method=${encodeURIComponent(methodLabel)}&description=${encodeURIComponent(description)}`;
+        }, 1500);
     };
 
     return (
@@ -142,8 +143,8 @@ export function CheckoutDemo() {
 
                 <Button
                     className={`w-full font-bold h-12 text-base transition-all ${paymentMethod === 'bank' ? 'bg-[#0047BA] hover:bg-[#00358a] text-white' :
-                            paymentMethod === 'mobile' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' :
-                                'bg-indigo-600 hover:bg-indigo-700 text-white'
+                        paymentMethod === 'mobile' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' :
+                            'bg-indigo-600 hover:bg-indigo-700 text-white'
                         }`}
                     disabled={loading}
                     onClick={handlePayment}

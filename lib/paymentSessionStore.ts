@@ -28,6 +28,8 @@ export interface CreateSessionInput {
   externalOrderId?: string;
   bankPaymentId?: string;
   status?: PaymentStatus;
+  paymentMethod?: string;
+  commissionAmount?: number;
 }
 
 function mapRowToSession(row: any): PaymentSession {
@@ -42,6 +44,8 @@ function mapRowToSession(row: any): PaymentSession {
     merchantNetAmount: Number(row.merchant_net_amount),
     description: row.description,
     status: row.status as PaymentStatus,
+    paymentMethod: row.payment_method ?? undefined,
+    commissionAmount: row.commission_amount ? Number(row.commission_amount) : undefined,
     customerName: row.customer_name ?? undefined,
     customerEmail: row.customer_email ?? undefined,
     successUrl: row.success_url,
@@ -97,7 +101,9 @@ export async function createSession(
       external_order_id,
       bank_payment_id,
       created_at,
-      updated_at
+      updated_at,
+      payment_method,
+      commission_amount
     )
     VALUES (
       ${id},
@@ -117,7 +123,9 @@ export async function createSession(
       ${input.externalOrderId ?? null},
       ${input.bankPaymentId ?? null},
       ${now}::timestamptz,
-      ${now}::timestamptz
+      ${now}::timestamptz,
+      ${input.paymentMethod ?? null},
+      ${input.commissionAmount ?? null}
     )
     RETURNING *
   `;
@@ -177,6 +185,8 @@ export async function updateSession(
       cancel_url = ${merged.cancelUrl},
       external_order_id = ${merged.externalOrderId ?? null},
       bank_payment_id = ${merged.bankPaymentId ?? null},
+      payment_method = ${merged.paymentMethod ?? null},
+      commission_amount = ${merged.commissionAmount ?? null},
       updated_at = ${now}::timestamptz
     WHERE id = ${id}
     RETURNING *

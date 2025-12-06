@@ -68,6 +68,10 @@ export interface PaymentSession {
   description: string;
   status: PaymentStatus;
 
+  // Detalles del pago
+  paymentMethod?: string;
+  commissionAmount?: number; // Monto explícito de la comisión cobrada (opcional)
+
   // Datos opcionales del cliente final.
   customerName?: string;
   customerEmail?: string;

@@ -2,11 +2,23 @@
 
 import Link from "next/link";
 import { CheckCircle2, ArrowRight, Printer, Download } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 export default function DemoSuccessPage() {
+    const searchParams = useSearchParams();
+    const amountParam = searchParams.get("amount");
+    const methodParam = searchParams.get("method");
+    const totalParam = searchParams.get("total");
+    const commissionParam = searchParams.get("commission");
+
+    const amountStr = amountParam ? `$${parseFloat(amountParam).toFixed(2)}` : "$125.00";
+    const commissionStr = commissionParam ? `$${parseFloat(commissionParam).toFixed(2)}` : "$0.00";
+    const totalStr = totalParam ? `$${parseFloat(totalParam).toFixed(2)}` : "$125.00";
+    const methodStr = methodParam ? decodeURIComponent(methodParam) : "Tarjeta de Crédito •••• 4242";
+
     const handlePrint = () => {
         window.print();
     };
@@ -55,7 +67,7 @@ export default function DemoSuccessPage() {
                         </div>
                         <div className="space-y-1">
                             <p className="text-slate-500 text-xs uppercase print:text-gray-500">Método de Pago</p>
-                            <p className="text-slate-200 font-medium print:text-black">Tarjeta de Crédito •••• 4242</p>
+                            <p className="text-slate-200 font-medium print:text-black">{methodStr}</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-slate-500 text-xs uppercase print:text-gray-500">Referencia Bancaria</p>
@@ -74,14 +86,21 @@ export default function DemoSuccessPage() {
                     {/* Line Items */}
                     <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-300 print:text-black">Plan Premium (Suscripción Mensual)</span>
-                            <span className="text-slate-200 font-medium print:text-black">$125.00</span>
+                            <span className="text-slate-300 print:text-black">Subtotal (Transacción)</span>
+                            <span className="text-slate-200 font-medium print:text-black">{amountStr}</span>
                         </div>
+                        {commissionParam && parseFloat(commissionParam) > 0 && (
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-400 print:text-gray-600">Comisión Pasarela</span>
+                                <span className="text-slate-300 font-medium print:text-gray-600">{commissionStr}</span>
+                            </div>
+                        )}
+
                         {/* Totals */}
                         <div className="pt-3 border-t border-slate-800 print:border-gray-300 space-y-2">
                             <div className="flex justify-between text-base font-bold text-white print:text-black">
                                 <span>Total Pagado</span>
-                                <span>$125.00 USD</span>
+                                <span>{totalStr}</span>
                             </div>
                         </div>
                     </div>
