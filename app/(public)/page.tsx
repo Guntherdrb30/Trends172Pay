@@ -38,35 +38,41 @@ export default function HomePage() {
 
             {/* Features Grid */}
             <section id="features" className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-3 transition-colors hover:border-indigo-500/50">
-                    <div className="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                        <Zap className="h-6 w-6 text-indigo-400" />
+                <Link href="/features/integration" className="block group">
+                    <div className="h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-3 transition-all group-hover:border-indigo-500/50 group-hover:bg-slate-900">
+                        <div className="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                            <Zap className="h-6 w-6 text-indigo-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-100">Integración Relámpago</h3>
+                        <p className="text-slate-400 text-sm">
+                            Copia y pega nuestro botón de pago o usa nuestra API REST completa. Documentación clara y en español.
+                        </p>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-100">Integración Relámpago</h3>
-                    <p className="text-slate-400 text-sm">
-                        Copia y pega nuestro botón de pago o usa nuestra API REST completa. Documentación clara y en español.
-                    </p>
-                </div>
+                </Link>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-3 transition-colors hover:border-emerald-500/50">
-                    <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                        <CreditCard className="h-6 w-6 text-emerald-400" />
+                <Link href="/features/methods" className="block group">
+                    <div className="h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-3 transition-all group-hover:border-emerald-500/50 group-hover:bg-slate-900">
+                        <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                            <CreditCard className="h-6 w-6 text-emerald-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-100">Múltiples Métodos</h3>
+                        <p className="text-slate-400 text-sm">
+                            Tus clientes eligen cómo pagar: Tarjeta de Crédito, Débito, Pago Móvil y más. Todo centralizado.
+                        </p>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-100">Múltiples Métodos</h3>
-                    <p className="text-slate-400 text-sm">
-                        Tus clientes eligen cómo pagar: Tarjeta de Crédito, Débito, Pago Móvil y más. Todo centralizado.
-                    </p>
-                </div>
+                </Link>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-3 transition-colors hover:border-sky-500/50">
-                    <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-                        <Lock className="h-6 w-6 text-sky-400" />
+                <Link href="/features/security" className="block group">
+                    <div className="h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-3 transition-all group-hover:border-sky-500/50 group-hover:bg-slate-900">
+                        <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                            <Lock className="h-6 w-6 text-sky-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-100">Seguridad Total</h3>
+                        <p className="text-slate-400 text-sm">
+                            Datos encriptados y monitoreo constante. Protegemos cada transacción de tu negocio.
+                        </p>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-100">Seguridad Total</h3>
-                    <p className="text-slate-400 text-sm">
-                        Datos encriptados y monitoreo constante. Protegemos cada transacción de tu negocio.
-                    </p>
-                </div>
+                </Link>
             </section>
 
             {/* Social Proof / Stats */}
