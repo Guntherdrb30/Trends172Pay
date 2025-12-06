@@ -8,17 +8,29 @@ import { Card } from "@/components/ui/card";
 
 export function ChatWidget() {
     const [isOpen, setIsOpen] = useState(false);
-    // @ts-ignore - Supressing partial type mismatch with @ai-sdk/react
-    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-        api: "/api/chat",
-        initialMessages: [
-            {
-                id: "welcome",
-                role: "assistant", // Ensuring role is one of the allowed types
-                content: "¡Hola! Soy TrendBot 🤖. Estoy aquí para ayudarte a integrar trends172 Pay."
-            }
-        ]
-    } as any);
+    // const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    //     api: "/api/chat",
+    //     initialMessages: [
+    //         {
+    //             id: "welcome",
+    //             role: "assistant",
+    //             content: "¡Hola! Soy TrendBot 🤖. Estoy aquí para ayudarte a integrar trends172 Pay."
+    //         }
+    //     ]
+    // } as any);
+
+    // MOCK DATA FOR DEBUGGING
+    const isLoading = false;
+    const input = "";
+    const handleInputChange = (e: any) => { };
+    const handleSubmit = (e: any) => { e.preventDefault(); };
+    const messages = [
+        {
+            id: "welcome",
+            role: "assistant",
+            content: "MODO DEBUG: Si ves esto, es que 'useChat' era el problema."
+        }
+    ];
 
     const scrollRef = useRef<HTMLDivElement>(null);
 
