@@ -14,7 +14,7 @@ export function ChatWidget() {
             {
                 id: "welcome",
                 role: "assistant", // Ensuring role is one of the allowed types
-                content: "¡Hola! Soy TrendBot 🤖. ¿Necesitas ayuda para integrar trends172 Pay en tu negocio?"
+                content: "¡Hola! Soy TrendBot 🤖. Estoy aquí para ayudarte a integrar trends172 Pay."
             }
         ]
     });
@@ -76,8 +76,8 @@ export function ChatWidget() {
                             >
                                 <div
                                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${m.role === "user"
-                                            ? "border-slate-700 bg-slate-800"
-                                            : "border-indigo-500/30 bg-indigo-500/10"
+                                        ? "border-slate-700 bg-slate-800"
+                                        : "border-indigo-500/30 bg-indigo-500/10"
                                         }`}
                                 >
                                     {m.role === "user" ? (
@@ -88,8 +88,8 @@ export function ChatWidget() {
                                 </div>
                                 <div
                                     className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${m.role === "user"
-                                            ? "bg-indigo-600 text-white"
-                                            : "bg-slate-900 border border-slate-800 text-slate-300"
+                                        ? "bg-indigo-600 text-white"
+                                        : "bg-slate-900 border border-slate-800 text-slate-300"
                                         }`}
                                 >
                                     {m.content}
