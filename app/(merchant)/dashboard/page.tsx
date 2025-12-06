@@ -3,6 +3,8 @@ import { getMerchantById } from "@/lib/merchantAppStore";
 import { getMerchantBalance } from "@/lib/paymentSessionStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
     const cookieStore = await cookies();
     const merchantId = cookieStore.get("merchant_session")?.value;

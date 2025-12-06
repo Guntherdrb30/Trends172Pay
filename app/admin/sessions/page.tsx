@@ -8,6 +8,10 @@ const PAYMENT_STATUSES: PaymentStatus[] = [
   "failed"
 ];
 
+
+
+export const dynamic = "force-dynamic";
+
 export default async function AdminSessionsPage({
   searchParams
 }: {

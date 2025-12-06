@@ -2,6 +2,8 @@ import Link from "next/link";
 import { seedMerchantApps, listMerchants } from "@/lib/merchantAppStore";
 import { listSessions } from "@/lib/paymentSessionStore";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminHomePage() {
   await seedMerchantApps();
 

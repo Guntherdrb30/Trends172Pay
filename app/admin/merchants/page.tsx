@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { listMerchants, seedMerchantApps } from "@/lib/merchantAppStore";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminMerchantsPage() {
   await seedMerchantApps();
   const merchants = await listMerchants();
