@@ -23,6 +23,11 @@ export default function HomePage() {
                             Crear Cuenta Gratis
                         </Button>
                     </Link>
+                    <Link href="/pay/demo">
+                        <Button variant="secondary" size="lg" className="bg-white text-slate-900 hover:bg-slate-200 font-semibold px-8">
+                            Probar Demo
+                        </Button>
+                    </Link>
                     <Link href="#features">
                         <Button variant="outline" size="lg" className="text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white">
                             Saber más

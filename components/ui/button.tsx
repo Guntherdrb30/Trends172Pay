@@ -15,7 +15,9 @@ const buttonVariants = cva(
         outline:
           "border border-slate-700 bg-transparent text-slate-100 hover:bg-slate-900/60",
         ghost:
-          "bg-transparent text-slate-100 hover:bg-slate-900/60 hover:text-slate-50"
+          "bg-transparent text-slate-100 hover:bg-slate-900/60 hover:text-slate-50",
+        secondary:
+          "bg-slate-800 text-slate-100 hover:bg-slate-800/80"
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -33,7 +35,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
