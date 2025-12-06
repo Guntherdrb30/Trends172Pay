@@ -1,141 +1,108 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, LineChart, Layers3 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
-} from "@/components/ui/card";
+import { ArrowRight, CheckCircle2, Zap, Lock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+export const dynamic = "force-dynamic";
 
 export default function HomePage() {
   return (
-    <section className="flex w-full flex-col gap-10 py-6 sm:py-10">
-      <div className="grid items-center gap-10 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)]">
-        <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span>Alpha interna · trends172 Pay</span>
-          </div>
-
-          <div className="space-y-3">
-            <h1 className="bg-gradient-to-r from-slate-50 via-indigo-200 to-sky-300 bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-4xl lg:text-5xl">
-              Pasarela de pagos multi‑negocio, pensada para orquestar todo desde
-              un solo dashboard.
-            </h1>
-            <p className="max-w-xl text-sm text-slate-300 sm:text-base">
-              Centraliza cobros, comisiones y liquidaciones de múltiples
-              negocios sin exponer la complejidad bancaria. trends172 Pay
-              funciona como una capa única de pagos para tus e‑commerce,
-              academias, SaaS y cualquier app conectada.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button asChild size="lg">
-              <Link href="/admin/login">
-                Entrar al dashboard root
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+    <div className="flex flex-col gap-20 py-10">
+      {/* Hero Section */}
+      <section className="text-center space-y-6">
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent pb-2">
+          La forma más simple de <br /> cobrar online en Venezuela
+        </h1>
+        <p className="mx-auto max-w-2xl text-lg text-slate-400">
+          trends172 Pay ofrece una pasarela robusta para tu negocio.
+          Acepta tarjetas y pagos móviles en minutos con nuestra API fácil de integrar.
+          Sin burocracia, sin complicaciones.
+        </p>
+        <div className="flex justify-center gap-4 pt-4">
+          <Link href="/signup">
+            <Button size="lg" className="bg-indigo-600 hover:bg-indigo-500 font-semibold px-8">
+              Crear Cuenta Gratis
             </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link
-                href="https://github.com/Guntherdrb30/Trends172Pay/blob/main/README.md"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Ver guía rápida de API v1
-              </Link>
+          </Link>
+          <Link href="#features">
+            <Button variant="outline" size="lg" className="text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white">
+              Saber más
             </Button>
-          </div>
+          </Link>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap gap-6 text-xs text-slate-400 sm:text-sm">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/80 ring-1 ring-slate-700">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
-              </span>
-              <span>Multi‑tenant aislado por negocio.</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/80 ring-1 ring-slate-700">
-                <Layers3 className="h-3.5 w-3.5 text-indigo-300" />
-              </span>
-              <span>Capas separadas: dashboard, API v1 y banco.</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/80 ring-1 ring-slate-700">
-                <LineChart className="h-3.5 w-3.5 text-sky-300" />
-              </span>
-              <span>Sesiones de pago y comisiones en tiempo real.</span>
-            </div>
+      {/* Features Grid */}
+      <section id="features" className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-3 transition-colors hover:border-indigo-500/50">
+          <div className="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+            <Zap className="h-6 w-6 text-indigo-400" />
           </div>
+          <h3 className="text-xl font-bold text-slate-100">Integración Relámpago</h3>
+          <p className="text-slate-400 text-sm">
+            Copia y pega nuestro botón de pago o usa nuestra API REST completa. Documentación clara y en español.
+          </p>
         </div>
 
-        <Card className="relative overflow-hidden border-slate-700/80 bg-gradient-to-br from-slate-900/80 via-slate-950 to-slate-900/80">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
-          <CardHeader className="relative space-y-2">
-            <CardTitle className="flex items-center justify-between text-base">
-              <span>Resumen de plataforma</span>
-              <span className="rounded-full bg-emerald-900/40 px-2 py-0.5 text-[11px] font-medium text-emerald-200">
-                Entorno interno
-              </span>
-            </CardTitle>
-            <CardDescription>
-              Métricas simuladas para validar el flujo de dashboard,
-              multi‑negocio y sesiones de pago antes de conectar el banco real.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="relative space-y-4">
-            <div className="grid grid-cols-3 gap-3 text-xs sm:text-sm">
-              <div className="space-y-1 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-                <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                  Negocios activos
-                </p>
-                <p className="text-lg font-semibold text-slate-50">2</p>
-                <p className="text-[11px] text-slate-500">
-                  Semilla de desarrollo
-                </p>
-              </div>
-              <div className="space-y-1 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-                <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                  API v1
-                </p>
-                <p className="text-lg font-semibold text-slate-50">
-                  /api/v1/payment-sessions
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  Crea y consulta sesiones por negocio
-                </p>
-              </div>
-              <div className="space-y-1 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-                <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                  Checkout alojado
-                </p>
-                <p className="text-lg font-semibold text-slate-50">/pay</p>
-                <p className="text-[11px] text-slate-500">
-                  Orquestado desde trends172 Pay
-                </p>
-              </div>
-            </div>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-3 transition-colors hover:border-emerald-500/50">
+          <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <CreditCard className="h-6 w-6 text-emerald-400" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-100">Múltiples Métodos</h3>
+          <p className="text-slate-400 text-sm">
+            Tus clientes eligen cómo pagar: Tarjeta de Crédito, Débito, Pago Móvil y más. Todo centralizado.
+          </p>
+        </div>
 
-            <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-3 text-[11px] text-slate-400 sm:text-xs">
-              <p className="font-medium text-slate-200">
-                ¿Cómo se integra un cliente?
-              </p>
-              <p className="mt-1">
-                1) El negocio obtiene su <span className="font-mono">apiKey</span> desde
-                el dashboard. 2) Llama a{" "}
-                <span className="font-mono">POST /api/v1/payment-sessions</span> con el
-                pedido. 3) Redirige al usuario a la{" "}
-                <span className="font-mono">checkoutUrl</span> generada.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </section>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-3 transition-colors hover:border-sky-500/50">
+          <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
+            <Lock className="h-6 w-6 text-sky-400" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-100">Seguridad Total</h3>
+          <p className="text-slate-400 text-sm">
+            Datos encriptados y monitoreo constante. Protegemos cada transacción de tu negocio.
+          </p>
+        </div>
+      </section>
+
+      {/* Social Proof / Stats */}
+      <section className="rounded-3xl bg-indigo-950/20 border border-indigo-500/10 p-8 sm:p-12 text-center">
+        <h2 className="text-2xl font-bold text-slate-100 mb-8">
+          Diseñado para crecer contigo
+        </h2>
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div className="space-y-1">
+            <p className="text-3xl font-extrabold text-white">99.9%</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Uptime</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-3xl font-extrabold text-white">+200</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Negocios</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-3xl font-extrabold text-white">1.5s</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Latencia</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-3xl font-extrabold text-white">24/7</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Soporte</p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Bottom */}
+      <section className="flex flex-col items-center justify-center space-y-6 pt-10 border-t border-slate-800">
+        <h2 className="text-3xl font-bold text-center text-slate-50">
+          ¿Listo para automatizar tus cobros?
+        </h2>
+        <p className="text-slate-400 max-w-lg text-center">
+          Únete a los comercios que ya confían en trends172 Pay para gestionar sus ingresos.
+        </p>
+        <Link href="/signup">
+          <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-200 px-10 py-6 text-lg font-bold">
+            Empezar Ahora <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </Link>
+      </section>
+    </div>
   );
 }
-
