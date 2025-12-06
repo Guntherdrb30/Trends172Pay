@@ -32,8 +32,18 @@ async function runMigrations() {
     const content = fs.readFileSync(fullPath, "utf8");
 
     console.log(`\nAplicando migración: ${file}`);
-    await sql(content);
-    console.log(`✔ Migración ${file} aplicada`);
+
+    // Split content by semicolon to handle multiple statements with Neon driver
+    const statements = content
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    for (const statement of statements) {
+      await sql(statement);
+    }
+
+    console.log(`✔ Migración ${file} aplicada (${statements.length} sentencias)`);
   }
 
   console.log("\nTodas las migraciones se aplicaron correctamente.");

@@ -9,4 +9,3 @@ export const db = connectionString
       "DATABASE_URL no está configurada. Define esta variable en tu entorno (Neon / Vercel) para usar la base de datos."
     );
   }) as any;
-
