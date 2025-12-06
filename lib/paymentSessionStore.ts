@@ -139,6 +139,8 @@ export async function getSessionById(
   return mapRowToSession(rows[0]);
 }
 
+export const getPaymentSession = getSessionById;
+
 export async function updateSession(
   id: string,
   partial: Partial<PaymentSession>

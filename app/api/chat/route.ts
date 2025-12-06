@@ -1,5 +1,7 @@
 import { google } from "@ai-sdk/google";
 import { streamText, convertToCoreMessages } from "ai";
+import { z } from "zod";
+import { getMerchantByEmail, getMerchantByBusinessCode, listMerchants } from "@/lib/merchantAppStore";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -39,6 +41,47 @@ export async function POST(req: Request) {
             model: google("gemini-1.5-flash"),
             system: systemContext,
             messages: convertToCoreMessages(messages),
+            tools: {
+                getMerchantDetails: {
+                    description: "Obtiene información pública de un comercio registrado dado su email o código de negocio.",
+                    parameters: z.object({
+                        email: z.string().optional().describe("El correo electrónico del comercio a buscar"),
+                        businessCode: z.string().optional().describe("El código único del negocio (ej: CARPIHOGAR)")
+                    }),
+                    execute: async ({ email, businessCode }) => {
+                        console.log("Tool executing: getMerchantDetails", { email, businessCode });
+                        try {
+                            if (email) {
+                                const m = await getMerchantByEmail(email);
+                                if (!m) return "No se encontró ningún comercio con ese correo.";
+                                return JSON.stringify({ name: m.displayName, code: m.businessCode, currency: m.payoutCurrency, tech: m.techStackHint });
+                            }
+                            if (businessCode) {
+                                const m = await getMerchantByBusinessCode(businessCode);
+                                if (!m) return "No se encontró ningún comercio con ese código.";
+                                return JSON.stringify({ name: m.displayName, email: m.contactEmail || "No público", currency: m.payoutCurrency });
+                            }
+                            return "Debes proporcionar un email o un businessCode.";
+                        } catch (e: any) {
+                            return `Error consultando BD: ${e.message}`;
+                        }
+                    },
+                },
+                countMerchants: {
+                    description: "Cuenta cuántos comercios hay registrados en total en la plataforma.",
+                    parameters: z.object({}),
+                    execute: async () => {
+                        // Implementación rápida directa
+                        // Nota: Idealmente importar una función optimizada
+                        try {
+                            const list = await listMerchants();
+                            return `Actualmente hay ${list.length} comercios registrados.`;
+                        } catch (e: any) {
+                            return `Error contando: ${e.message}`;
+                        }
+                    }
+                }
+            },
         });
 
         return result.toTextStreamResponse();

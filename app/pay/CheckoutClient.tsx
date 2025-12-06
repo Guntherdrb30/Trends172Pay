@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert } from "@/components/ui/alert";
 
+import { MercantilButton } from "./components/MercantilButton";
+
 interface CheckoutResponse {
   session: PaymentSession;
   merchant: {
@@ -32,7 +34,7 @@ export default function CheckoutClient() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "mobile">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "mobile" | "bank">("card");
 
   useEffect(() => {
     if (!sessionId) {
@@ -198,35 +200,135 @@ export default function CheckoutClient() {
             <button
               onClick={() => setPaymentMethod("card")}
               className={`rounded-md border p-2 text-sm font-medium transition-colors ${paymentMethod === "card"
-                  ? "border-slate-50 bg-slate-800 text-slate-50"
-                  : "border-slate-800 bg-transparent text-slate-400 hover:border-slate-700"
+                ? "border-slate-50 bg-slate-800 text-slate-50"
+                : "border-slate-800 bg-transparent text-slate-400 hover:border-slate-700"
                 }`}
             >
-              Tarjeta (Mercantil)
+              Tarjeta
+            </button>
+            <button
+              onClick={() => setPaymentMethod("bank")}
+              className={`rounded-md border p-2 text-sm font-medium transition-colors ${paymentMethod === "bank"
+                ? "border-[#0047BA] bg-blue-900/20 text-blue-100"
+                : "border-slate-800 bg-transparent text-slate-400 hover:border-slate-700"
+                }`}
+            >
+              Banco Mercantil
             </button>
             <button
               onClick={() => setPaymentMethod("mobile")}
-              className={`rounded-md border p-2 text-sm font-medium transition-colors ${paymentMethod === "mobile"
-                  ? "border-slate-50 bg-slate-800 text-slate-50"
-                  : "border-slate-800 bg-transparent text-slate-400 hover:border-slate-700"
+              className={`col-span-2 rounded-md border p-2 text-sm font-medium transition-colors ${paymentMethod === "mobile"
+                ? "border-slate-50 bg-slate-800 text-slate-50"
+                : "border-slate-800 bg-transparent text-slate-400 hover:border-slate-700"
                 }`}
             >
-              Pago Móvil
+              Pago Móvil (C2P)
             </button>
           </div>
 
           {paymentMethod === "mobile" ? (
-            <div className="rounded-md bg-slate-900 p-4 text-sm text-slate-300">
-              <p className="font-semibold text-slate-50 mb-2">Datos para Pago Móvil:</p>
-              <ul className="list-disc pl-4 space-y-1 text-xs">
-                <li>Banco: 0105 - Mercantil</li>
-                <li>Teléfono: 0414-1234567</li>
-                <li>C.I. / RIF: J-12345678-9</li>
-              </ul>
-              <p className="mt-3 text-xs text-yellow-500">
-                * Funcionalidad de reporte automático en construcción.
-              </p>
+            <div className="space-y-4 rounded-md bg-slate-900 p-4 text-sm text-slate-300">
+              <p className="font-semibold text-slate-50">Pago Móvil C2P</p>
+
+              {/* Inputs C2P */}
+              <div className="grid gap-3">
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Cédula de Identidad</label>
+                  <div className="flex gap-2">
+                    <select id="user-doc-type" className="bg-slate-950 border border-slate-700 rounded text-slate-200 p-2 text-sm max-w-[60px]">
+                      <option value="V">V</option>
+                      <option value="E">E</option>
+                      <option value="J">J</option>
+                    </select>
+                    <input
+                      id="user-doc-num"
+                      type="text"
+                      placeholder="12345678"
+                      className="flex-1 bg-slate-950 border border-slate-700 rounded text-slate-200 p-2 text-sm"
+                      onChange={(e) => {
+                        // Guardamos el valor completo V12345678 en una variable temporal o estado si fuera necesario
+                        // Por simplicidad, leeremos directamente del DOM en el submit o usaremos state.
+                        // Para esta implementación rápida, añadiré state local arriba.
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Número de Teléfono</label>
+                  <input
+                    id="user-phone"
+                    type="tel"
+                    placeholder="04141234567"
+                    className="w-full bg-slate-950 border border-slate-700 rounded text-slate-200 p-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Clave de Compra (OTP)</label>
+                  <input
+                    id="user-otp"
+                    type="password"
+                    maxLength={8}
+                    placeholder="Clave generada en tu banco"
+                    className="w-full bg-slate-950 border border-slate-700 rounded text-slate-200 p-2 text-sm"
+                  />
+                </div>
+              </div>
+
+              <Button
+                className="w-full bg-slate-100 text-slate-900 hover:bg-slate-200"
+                disabled={loading || isRedirecting}
+                onClick={async () => {
+                  const type = (document.getElementById('user-doc-type') as HTMLSelectElement).value;
+                  const num = (document.getElementById('user-doc-num') as HTMLInputElement).value;
+                  const phone = (document.getElementById('user-phone') as HTMLInputElement).value;
+                  const otp = (document.getElementById('user-otp') as HTMLInputElement).value;
+
+                  if (!num || !phone || !otp) {
+                    setError("Por favor completa todos los datos del pago móvil.");
+                    return;
+                  }
+
+                  const payerId = `${type}${num}`;
+
+                  setLoading(true);
+                  setError(null);
+
+                  try {
+                    const res = await fetch("/api/pay/c2p", {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        sessionId,
+                        payerId,
+                        payerMobile: phone,
+                        otp
+                      })
+                    });
+
+                    const json = await res.json();
+
+                    if (!res.ok || !json.success) {
+                      throw new Error(json.error || "Error procesando el pago");
+                    }
+
+                    // Exito! Redirigir a success
+                    window.location.href = `/pay/result/success?sessionId=${sessionId}`;
+
+                  } catch (err: any) {
+                    console.error(err);
+                    setError(err.message);
+                    setLoading(false);
+                  }
+                }}
+              >
+                {loading ? "Procesando Cobro..." : "Pagar Ahora"}
+              </Button>
             </div>
+          ) : paymentMethod === "bank" ? (
+            <MercantilButton
+              sessionId={sessionId!}
+              onError={(msg) => setError(msg)}
+            />
           ) : (
             <Button
               className="w-full"

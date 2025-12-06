@@ -28,6 +28,12 @@ export default function DashboardLayout({
                     >
                         Integración
                     </Link>
+                    <Link
+                        href="/dashboard/profile"
+                        className="block rounded-md px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-white"
+                    >
+                        Perfil de Negocio
+                    </Link>
                     <form action={logout} className="mt-8 pt-4 border-t border-slate-900">
                         <button
                             type="submit"
