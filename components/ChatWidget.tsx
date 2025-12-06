@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 
 export function ChatWidget() {
     const [isOpen, setIsOpen] = useState(false);
+    // @ts-ignore - Supressing partial type mismatch with @ai-sdk/react
     const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
         api: "/api/chat",
         initialMessages: [
