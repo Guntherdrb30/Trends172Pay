@@ -18,7 +18,7 @@ export function ChatWidget() {
                 content: "¡Hola! Soy TrendBot 🤖. Estoy aquí para ayudarte a integrar trends172 Pay."
             }
         ]
-    });
+    } as any);
 
     const scrollRef = useRef<HTMLDivElement>(null);
 
