@@ -34,11 +34,12 @@ export default function AdminSettingsPage() {
             updateGlobalSetting("fee_card_fixed", settings.feeCardFixed.toString()),
             updateGlobalSetting("fee_c2p_percent", settings.feeC2pPercent.toString()),
             updateGlobalSetting("fee_transfer_percent", settings.feeTransferPercent.toString()),
+            updateGlobalSetting("bank_fee_percent", settings.bankFeePercent.toString()),
         ];
 
         await Promise.all(updates);
         setSaving(false);
-        alert("Configuración actualizada correctamente"); // Simple feedback
+        alert("Configuración actualizada correctamente");
     }
 
     const handleChange = (field: keyof GlobalSettings, value: string) => {
@@ -133,6 +134,24 @@ export default function AdminSettingsPage() {
                                 />
                                 <span className="text-slate-400 text-sm">%</span>
                             </div>
+                        </div>
+
+                        {/* New Bank Fee Section */}
+                        <div className="space-y-2 pt-4 border-t border-slate-800 md:col-span-2">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Label className="text-emerald-400 font-bold">Costo Bancario Interno</Label>
+                                <span className="text-xs text-slate-500 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">No visible al cliente</span>
+                            </div>
+                            <div className="flex items-center gap-2 max-w-[200px]">
+                                <Input
+                                    type="number"
+                                    value={settings.bankFeePercent}
+                                    onChange={(e) => handleChange("bankFeePercent", e.target.value)}
+                                    className="bg-slate-950 border-emerald-900/50 text-emerald-100"
+                                />
+                                <span className="text-slate-400 text-sm">%</span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">Este porcentaje es retenido por el banco y se descontará de la liquidación del comercio.</p>
                         </div>
                     </div>
                 </CardContent>
