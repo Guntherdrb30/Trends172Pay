@@ -1,12 +1,20 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { LayoutDashboard, Users, Settings, LogOut, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { checkAdminSession, adminLogout } from "@/app/actions/admin-auth";
 
-export default function AdminLayout({
+export default async function AdminLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const isAuth = await checkAdminSession();
+
+    if (!isAuth) {
+        redirect("/admin-login");
+    }
+
     return (
         <div className="min-h-screen bg-slate-950 flex font-sans">
             {/* Admin Sidebar */}
@@ -37,11 +45,11 @@ export default function AdminLayout({
                 </nav>
 
                 <div className="p-4 border-t border-slate-800">
-                    <Link href="/">
+                    <form action={adminLogout}>
                         <Button variant="outline" className="w-full border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900">
-                            <LogOut className="mr-2 h-4 w-4" /> Salir
+                            <LogOut className="mr-2 h-4 w-4" /> Cerrar Sesión
                         </Button>
-                    </Link>
+                    </form>
                 </div>
             </aside>
 
