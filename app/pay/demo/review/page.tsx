@@ -1,14 +1,14 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Check, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function ReviewPage() {
+function ReviewContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -107,5 +107,13 @@ export default function ReviewPage() {
                 </CardFooter>
             </Card>
         </div>
+    );
+}
+
+export default function ReviewPage() {
+    return (
+        <Suspense fallback={<div className="text-center p-12 text-slate-500">Cargando detalles...</div>}>
+            <ReviewContent />
+        </Suspense>
     );
 }
