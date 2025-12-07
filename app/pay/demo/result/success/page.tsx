@@ -1,24 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, ArrowRight, Printer, Download } from "lucide-react";
+import { CheckCircle2, ArrowRight, Printer } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Suspense } from "react";
 
 function SuccessContent() {
     const searchParams = useSearchParams();
-    const amountParam = searchParams.get("amount");
-    const methodParam = searchParams.get("method");
-    const totalParam = searchParams.get("total");
-    const commissionParam = searchParams.get("commission");
 
-    const amountStr = amountParam ? `Bs ${parseFloat(amountParam).toFixed(2)}` : "Bs 125.00";
-    const commissionStr = commissionParam ? `Bs ${parseFloat(commissionParam).toFixed(2)}` : "Bs 0.00";
-    const totalStr = totalParam ? `Bs ${parseFloat(totalParam).toFixed(2)}` : "Bs 125.00";
-    const methodStr = methodParam ? decodeURIComponent(methodParam) : "Tarjeta de Crédito •••• 4242";
+    // Params with VES logic
+    const amountUsd = searchParams.get("amount") || "100.00";
+    const taxUsd = searchParams.get("tax") || "16.00";
+    const feeUsd = searchParams.get("fee") || "1.46";
+    const totalUsd = searchParams.get("totalUsd") || "117.46";
+    const totalBs = searchParams.get("totalBs") || "6509.63";
+    const rate = searchParams.get("rate") || "55.42";
+    const methodStr = searchParams.get("method") ? decodeURIComponent(searchParams.get("method")!) : "Tarjeta de Crédito";
 
     const handlePrint = () => {
         window.print();
@@ -33,7 +33,7 @@ function SuccessContent() {
     });
 
     return (
-        <div className="flex flex-col items-center justify-center w-full max-w-lg mx-auto animate-in fade-in zoom-in duration-500">
+        <div className="flex flex-col items-center justify-center w-full max-w-lg mx-auto animate-in fade-in zoom-in duration-500 py-10">
             <Card className="w-full bg-slate-950 border-slate-800 shadow-2xl overflow-hidden print:shadow-none print:border-none">
                 {/* Status Header */}
                 <div className="bg-emerald-500/10 p-6 flex flex-col items-center justify-center border-b border-emerald-500/20 print:bg-transparent print:border-b-black">
@@ -71,14 +71,12 @@ function SuccessContent() {
                             <p className="text-slate-200 font-medium print:text-black">{methodStr}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-slate-500 text-xs uppercase print:text-gray-500">Referencia Bancaria</p>
+                            <p className="text-slate-500 text-xs uppercase print:text-gray-500">Ref. Bancaria</p>
                             <p className="text-slate-200 font-medium print:text-black">0011223344</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-slate-500 text-xs uppercase print:text-gray-500">Estado</p>
-                            <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-500/20 print:text-green-600 print:bg-green-100 print:ring-0">
-                                Aprobado
-                            </span>
+                            <p className="text-slate-500 text-xs uppercase print:text-gray-500">Tasa BCV</p>
+                            <p className="text-emerald-400 font-medium print:text-black">{rate} Bs/$</p>
                         </div>
                     </div>
 
@@ -87,21 +85,27 @@ function SuccessContent() {
                     {/* Line Items */}
                     <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-300 print:text-black">Subtotal (Transacción)</span>
-                            <span className="text-slate-200 font-medium print:text-black">{amountStr}</span>
+                            <span className="text-slate-300 print:text-black">Precio Base</span>
+                            <span className="text-slate-200 font-medium print:text-black">${amountUsd}</span>
                         </div>
-                        {commissionParam && parseFloat(commissionParam) > 0 && (
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-400 print:text-gray-600">Comisión Pasarela</span>
-                                <span className="text-slate-300 font-medium print:text-gray-600">{commissionStr}</span>
-                            </div>
-                        )}
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-300 print:text-black">IVA (16%)</span>
+                            <span className="text-slate-200 font-medium print:text-black">${taxUsd}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-300 print:text-black">Comisión Pasarela</span>
+                            <span className="text-slate-200 font-medium print:text-black">${feeUsd}</span>
+                        </div>
+                        <div className="flex justify-between text-sm pt-2 border-t border-slate-800">
+                            <span className="text-slate-400 font-medium print:text-black">Total USD</span>
+                            <span className="text-slate-200 font-bold print:text-black">${totalUsd}</span>
+                        </div>
 
-                        {/* Totals */}
-                        <div className="pt-3 border-t border-slate-800 print:border-gray-300 space-y-2">
-                            <div className="flex justify-between text-base font-bold text-white print:text-black">
-                                <span>Total Pagado</span>
-                                <span>{totalStr}</span>
+                        {/* Final VES Total */}
+                        <div className="bg-emerald-950/30 p-4 mt-2 rounded-lg border border-emerald-900/50 print:bg-gray-100 print:border-gray-300">
+                            <div className="flex justify-between items-end">
+                                <span className="text-emerald-500 font-bold mb-1 print:text-black">Monto Pagado</span>
+                                <span className="text-2xl font-bold text-white print:text-black">Bs {totalBs}</span>
                             </div>
                         </div>
                     </div>

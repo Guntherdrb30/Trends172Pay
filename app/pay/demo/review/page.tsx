@@ -5,43 +5,84 @@ import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Check, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 function ReviewContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    const amount = parseFloat(searchParams.get("amount") || "0");
+    // 1. Base Price in USD (e.g., from store)
+    const baseAmountUsd = parseFloat(searchParams.get("amount") || "100");
     const method = searchParams.get("method") || "Desconocido";
-    const description = searchParams.get("description") || "Compra";
+    const description = searchParams.get("description") || "Compra en Tienda";
 
-    const [commission, setCommission] = useState(0);
-    const [total, setTotal] = useState(0);
+    // Constants
+    const IVA_RATE = 0.16; // 16% VAT in Venezuela
+    const BCV_RATE = 55.42; // Mock Exchange Rate
+
+    // State
+    const [calculations, setCalculations] = useState({
+        taxUsd: 0,
+        feeUsd: 0,
+        subtotalUsd: 0,
+        totalUsd: 0,
+        totalBs: 0
+    });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Simular cálculo de comisión según método
-        let fee = 0;
+        // 2. Calculate IVA
+        const tax = baseAmountUsd * IVA_RATE;
+        const subtotal = baseAmountUsd + tax;
+
+        // 3. Calculate Platform Commission (Fee)
+        // Logic: Commission applied on top of the (Base + Tax) or just Base?
+        // User said: "monto total del producto mas el iva... mas el porcentaje que cobra la plataforma"
+        // Let's assume fee percent is on the subtotal (Price + Tax)
+        let feePercent = 0.01; // Default 1%
+        let feeFixed = 0;
+
         if (method.toLowerCase().includes("tarjeta")) {
-            fee = amount * 0.029 + 0.30; // 2.9% + $0.30
+            feePercent = 0.029; // 2.9%
+            feeFixed = 0.30;
         } else if (method.toLowerCase().includes("móvil") || method.toLowerCase().includes("movil")) {
-            fee = amount * 0.015; // 1.5%
-        } else {
-            fee = amount * 0.01; // 1% default
+            feePercent = 0.015; // 1.5%
         }
 
-        setCommission(fee);
-        setTotal(amount + fee);
-    }, [amount, method]);
+        const fee = (subtotal * feePercent) + feeFixed;
+
+        // 4. Total USD
+        const finalTotalUsd = subtotal + fee;
+
+        // 5. Total VES (Bs)
+        const finalTotalBs = finalTotalUsd * BCV_RATE;
+
+        setCalculations({
+            taxUsd: tax,
+            subtotalUsd: subtotal,
+            feeUsd: fee,
+            totalUsd: finalTotalUsd,
+            totalBs: finalTotalBs
+        });
+
+    }, [baseAmountUsd, method]);
 
     const handleConfirm = () => {
         setLoading(true);
         // Simular procesamiento
         setTimeout(() => {
-            router.push(
-                `/pay/demo/result/success?amount=${amount}&method=${encodeURIComponent(method)}&total=${total.toFixed(2)}&commission=${commission.toFixed(2)}`
-            );
+            // Pass all calculated values to success page
+            const params = new URLSearchParams({
+                amount: baseAmountUsd.toFixed(2),
+                tax: calculations.taxUsd.toFixed(2),
+                fee: calculations.feeUsd.toFixed(2),
+                totalUsd: calculations.totalUsd.toFixed(2),
+                totalBs: calculations.totalBs.toFixed(2),
+                rate: BCV_RATE.toFixed(2),
+                method: method
+            });
+            router.push(`/pay/demo/result/success?${params.toString()}`);
         }, 1500);
     };
 
@@ -59,24 +100,44 @@ function ReviewContent() {
                         <span className="text-slate-200 font-medium text-right">{description}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">Método de Pago</span>
+                        <span className="text-slate-400">Método</span>
                         <span className="text-slate-200 font-medium">{method}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">Tasa BCV</span>
+                        <span className="text-emerald-400 font-medium">{BCV_RATE.toFixed(2)} Bs/$</span>
                     </div>
 
                     <Separator className="bg-slate-800" />
 
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Subtotal</span>
-                            <span className="text-slate-200">Bs {amount.toFixed(2)}</span>
+                    {/* USD Breakdown */}
+                    <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Precio Base</span>
+                            <span className="text-slate-200">${baseAmountUsd.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">IVA (16%)</span>
+                            <span className="text-slate-200">${calculations.taxUsd.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
                             <span className="text-slate-400">Comisión Pasarela</span>
-                            <span className="text-slate-200">Bs {commission.toFixed(2)}</span>
+                            <span className="text-slate-200">${calculations.feeUsd.toFixed(2)}</span>
                         </div>
-                        <div className="pt-2 flex justify-between text-base font-bold">
-                            <span className="text-indigo-400">Total a Pagar</span>
-                            <span className="text-white">Bs {total.toFixed(2)}</span>
+                        <div className="pt-2 flex justify-between text-base font-medium border-t border-slate-800/50 mt-2">
+                            <span className="text-slate-300">Total USD</span>
+                            <span className="text-slate-200">${calculations.totalUsd.toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    {/* Final Conversion */}
+                    <div className="bg-emerald-950/20 rounded-lg p-4 mt-4 border border-emerald-900/50">
+                        <div className="flex justify-between items-center">
+                            <span className="text-emerald-500 font-medium">Total a Pagar</span>
+                            <div className="text-right">
+                                <span className="block text-2xl font-bold text-white">Bs {calculations.totalBs.toFixed(2)}</span>
+                                <span className="text-xs text-emerald-500/80">Ref: ${calculations.totalUsd.toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -91,10 +152,10 @@ function ReviewContent() {
                 <CardFooter className="flex flex-col gap-3">
                     <Button
                         onClick={handleConfirm}
-                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white"
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 text-lg"
                         disabled={loading}
                     >
-                        {loading ? "Procesando..." : `Pagar Bs ${total.toFixed(2)}`}
+                        {loading ? "Procesando..." : `Pagar Bs {calculations.totalBs.toFixed(2)}`}
                     </Button>
                     <Button
                         variant="ghost"
@@ -102,7 +163,7 @@ function ReviewContent() {
                         className="w-full text-slate-400 hover:text-white"
                         disabled={loading}
                     >
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Cancelar
                     </Button>
                 </CardFooter>
             </Card>
