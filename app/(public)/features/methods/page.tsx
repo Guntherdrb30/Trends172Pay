@@ -118,6 +118,5 @@ export default function MethodsPage() {
                 </Link>
             </div>
         </div>
-        </div >
     );
 }
