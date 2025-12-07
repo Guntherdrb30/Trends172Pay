@@ -6,6 +6,28 @@ import { neon } from "@neondatabase/serverless";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Simple .env loader
+if (!process.env.DATABASE_URL) {
+  try {
+    const envPath = path.join(__dirname, "..", ".env");
+    if (fs.existsSync(envPath)) {
+      const envConfig = fs.readFileSync(envPath, 'utf8');
+      for (const line of envConfig.split('\n')) {
+        const match = line.match(/^([^=]+)=(.*)$/);
+        if (match) {
+          const key = match[1].trim();
+          const value = match[2].trim().replace(/^['"]|['"]$/g, '');
+          if (key === 'DATABASE_URL') {
+            process.env.DATABASE_URL = value;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Could not load .env file manually:", e);
+  }
+}
+
 const connectionString = process.env.DATABASE_URL;
 
 console.log("DATABASE_URL encontrada:", !!connectionString); // No imprimir la URL completa por seguridad

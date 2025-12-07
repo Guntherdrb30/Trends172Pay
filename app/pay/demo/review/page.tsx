@@ -7,84 +7,108 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getGlobalSettings, GlobalSettings } from "@/app/actions/settings";
 
 function ReviewContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    // 1. Base Price in USD (e.g., from store)
+    // 1. Base Price in USD
     const baseAmountUsd = parseFloat(searchParams.get("amount") || "100");
     const method = searchParams.get("method") || "Desconocido";
     const description = searchParams.get("description") || "Compra en Tienda";
 
-    // Constants
-    const IVA_RATE = 0.16; // 16% VAT in Venezuela
-    const BCV_RATE = 55.42; // Mock Exchange Rate
+    // Constants (Default fallbacks, will be overwritten by DB)
+    const IVA_RATE = 0.16;
 
     // State
+    const [settings, setSettings] = useState<GlobalSettings | null>(null);
     const [calculations, setCalculations] = useState({
         taxUsd: 0,
         feeUsd: 0,
         subtotalUsd: 0,
         totalUsd: 0,
-        totalBs: 0
+        totalBs: 0,
+        bcvRate: 0 // Track rate used
     });
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
+    // Fetch Settings
     useEffect(() => {
+        async function init() {
+            setLoading(true);
+            try {
+                const data = await getGlobalSettings();
+                setSettings(data);
+            } catch (error) {
+                console.error("Failed to load settings", error);
+            }
+            // Don't set loading false yet, wait for calc
+        }
+        init();
+    }, []);
+
+    // Calculate when settings or params change
+    useEffect(() => {
+        if (!settings) return;
+
         // 2. Calculate IVA
         const tax = baseAmountUsd * IVA_RATE;
         const subtotal = baseAmountUsd + tax;
 
-        // 3. Calculate Platform Commission (Fee)
-        // Logic: Commission applied on top of the (Base + Tax) or just Base?
-        // User said: "monto total del producto mas el iva... mas el porcentaje que cobra la plataforma"
-        // Let's assume fee percent is on the subtotal (Price + Tax)
-        let feePercent = 0.01; // Default 1%
-        let feeFixed = 0;
+        // 3. Calculate Platform Commission
+        let feePercent = settings.feeCardPercent;
+        let feeFixed = settings.feeCardFixed;
 
-        if (method.toLowerCase().includes("tarjeta")) {
-            feePercent = 0.029; // 2.9%
-            feeFixed = 0.30;
-        } else if (method.toLowerCase().includes("móvil") || method.toLowerCase().includes("movil")) {
-            feePercent = 0.015; // 1.5%
+        if (method.toLowerCase().includes("móvil") || method.toLowerCase().includes("movil")) {
+            feePercent = settings.feeC2pPercent;
+            feeFixed = 0; // Usually no fixed fee for C2P, but adaptable
+        } else if (method.toLowerCase().includes("transfer")) {
+            feePercent = settings.feeTransferPercent;
+            feeFixed = 0;
         }
 
-        const fee = (subtotal * feePercent) + feeFixed;
+        // Convert percent to decimal (e.g. 2.9 -> 0.029)
+        const fee = (subtotal * (feePercent / 100)) + feeFixed;
 
         // 4. Total USD
         const finalTotalUsd = subtotal + fee;
 
         // 5. Total VES (Bs)
-        const finalTotalBs = finalTotalUsd * BCV_RATE;
+        const finalTotalBs = finalTotalUsd * settings.bcvRate;
 
         setCalculations({
             taxUsd: tax,
             subtotalUsd: subtotal,
             feeUsd: fee,
             totalUsd: finalTotalUsd,
-            totalBs: finalTotalBs
+            totalBs: finalTotalBs,
+            bcvRate: settings.bcvRate
         });
+        setLoading(false);
 
-    }, [baseAmountUsd, method]);
+    }, [baseAmountUsd, method, settings]);
 
     const handleConfirm = () => {
         setLoading(true);
         // Simular procesamiento
         setTimeout(() => {
-            // Pass all calculated values to success page
             const params = new URLSearchParams({
                 amount: baseAmountUsd.toFixed(2),
                 tax: calculations.taxUsd.toFixed(2),
                 fee: calculations.feeUsd.toFixed(2),
                 totalUsd: calculations.totalUsd.toFixed(2),
                 totalBs: calculations.totalBs.toFixed(2),
-                rate: BCV_RATE.toFixed(2),
+                rate: calculations.bcvRate.toFixed(2),
                 method: method
             });
             router.push(`/pay/demo/result/success?${params.toString()}`);
         }, 1500);
     };
+
+    if (loading && !calculations.bcvRate) {
+        return <div className="flex justify-center p-12"><div className="text-slate-400 animate-pulse">Cargando cotización...</div></div>;
+    }
 
     return (
         <div className="flex flex-col items-center justify-center w-full max-w-lg mx-auto animate-in fade-in duration-500">
@@ -105,7 +129,7 @@ function ReviewContent() {
                     </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-slate-400">Tasa BCV</span>
-                        <span className="text-emerald-400 font-medium">{BCV_RATE.toFixed(2)} Bs/$</span>
+                        <span className="text-emerald-400 font-medium">{calculations.bcvRate.toFixed(2)} Bs/$</span>
                     </div>
 
                     <Separator className="bg-slate-800" />
@@ -155,13 +179,13 @@ function ReviewContent() {
                         className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 text-lg"
                         disabled={loading}
                     >
-                        {loading ? "Procesando..." : `Pagar Bs {calculations.totalBs.toFixed(2)}`}
+                        {loading && !calculations.bcvRate ? "Calculando..." : `Pagar Bs ${calculations.totalBs.toFixed(2)}`}
                     </Button>
                     <Button
                         variant="ghost"
                         onClick={() => router.back()}
                         className="w-full text-slate-400 hover:text-white"
-                        disabled={loading}
+                        disabled={loading && !calculations.bcvRate}
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" /> Cancelar
                     </Button>
