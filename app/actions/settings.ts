@@ -1,6 +1,6 @@
 "use server";
 
-import { query } from "@/lib/db";
+import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 export interface GlobalSettings {
@@ -13,7 +13,8 @@ export interface GlobalSettings {
 
 export async function getGlobalSettings(): Promise<GlobalSettings> {
     try {
-        const result = await query('SELECT key, value FROM global_settings');
+        // neon returns the rows directly as an array
+        const result = await db('SELECT key, value FROM global_settings');
 
         // Default fallback values
         const defaults: any = {
@@ -26,9 +27,12 @@ export async function getGlobalSettings(): Promise<GlobalSettings> {
 
         // Map DB rows to object
         const settingsMap: any = { ...defaults };
-        result.rows.forEach((row: any) => {
-            settingsMap[row.key] = row.value;
-        });
+        // Validating result is an array
+        if (Array.isArray(result)) {
+            result.forEach((row: any) => {
+                settingsMap[row.key] = row.value;
+            });
+        }
 
         return {
             bcvRate: parseFloat(settingsMap.bcv_rate),
@@ -68,7 +72,7 @@ export async function updateGlobalSetting(key: string, value: string) {
             throw new Error("Invalid setting key");
         }
 
-        await query(
+        await db(
             'INSERT INTO global_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP',
             [key, value]
         );
