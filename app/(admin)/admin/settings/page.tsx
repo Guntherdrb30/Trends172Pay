@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Save, Loader2 } from "lucide-react";
 import { getGlobalSettings, updateGlobalSetting, GlobalSettings } from "@/app/actions/settings";
-import { useToast } from "@/components/ui/use-toast"; // Assuming you have a toast component, else alert
 
 export default function AdminSettingsPage() {
     const [loading, setLoading] = useState(true);
