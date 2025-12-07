@@ -15,9 +15,9 @@ function SuccessContent() {
     const totalParam = searchParams.get("total");
     const commissionParam = searchParams.get("commission");
 
-    const amountStr = amountParam ? `$${parseFloat(amountParam).toFixed(2)}` : "$125.00";
-    const commissionStr = commissionParam ? `$${parseFloat(commissionParam).toFixed(2)}` : "$0.00";
-    const totalStr = totalParam ? `$${parseFloat(totalParam).toFixed(2)}` : "$125.00";
+    const amountStr = amountParam ? `Bs ${parseFloat(amountParam).toFixed(2)}` : "Bs 125.00";
+    const commissionStr = commissionParam ? `Bs ${parseFloat(commissionParam).toFixed(2)}` : "Bs 0.00";
+    const totalStr = totalParam ? `Bs ${parseFloat(totalParam).toFixed(2)}` : "Bs 125.00";
     const methodStr = methodParam ? decodeURIComponent(methodParam) : "Tarjeta de Crédito •••• 4242";
 
     const handlePrint = () => {
