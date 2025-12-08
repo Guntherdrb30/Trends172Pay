@@ -11,6 +11,7 @@ import { getGlobalSettings, updateGlobalSetting, GlobalSettings } from "@/app/ac
 export default function AdminSettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [syncing, setSyncing] = useState(false);
     const [settings, setSettings] = useState<GlobalSettings | null>(null);
 
     useEffect(() => {
@@ -40,6 +41,23 @@ export default function AdminSettingsPage() {
         await Promise.all(updates);
         setSaving(false);
         alert("Configuración actualizada correctamente");
+    }
+
+    async function handleSync() {
+        setSyncing(true);
+        try {
+            const res = await fetch('/api/cron/bcv-sync');
+            if (!res.ok) throw new Error('Failed to sync');
+
+            const data = await res.json();
+            alert(`Sincronización exitosa: Tasa actualizada a ${data.rate} VES/USD`);
+            await loadSettings(); // Reload to show new rate
+        } catch (error) {
+            console.error(error);
+            alert("Error al sincronizar con BCV");
+        } finally {
+            setSyncing(false);
+        }
     }
 
     const handleChange = (field: keyof GlobalSettings, value: string) => {
@@ -72,8 +90,14 @@ export default function AdminSettingsPage() {
                                 className="bg-slate-950 border-slate-700 text-white"
                             />
                         </div>
-                        <Button variant="outline" className="border-slate-700 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-500/50">
-                            <RefreshCw className="mr-2 h-4 w-4" /> Sincronizar con BCV
+                        <Button
+                            variant="outline"
+                            className="border-slate-700 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                            onClick={handleSync}
+                            disabled={syncing}
+                        >
+                            {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                            {syncing ? "Sincronizando..." : "Sincronizar con BCV"}
                         </Button>
                     </div>
                 </CardContent>
