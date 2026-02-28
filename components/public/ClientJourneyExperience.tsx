@@ -280,6 +280,59 @@ export function ClientJourneyExperience() {
         </article>
       </section>
 
+      <section className="rounded-3xl border border-emerald-300/30 bg-gradient-to-r from-emerald-900/25 via-slate-900 to-slate-900 p-6 sm:p-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/90">
+              Asesoria Personalizada
+            </p>
+            <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">
+              Quieres ayuda 1 a 1 para instalar tu boton de pago?
+            </h2>
+            <p className="mt-3 text-slate-300">
+              Nuestro equipo te guia por WhatsApp paso a paso segun tu web,
+              plataforma y nivel tecnico para que publiques rapido.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            {hasWhatsApp ? (
+              <Button
+                size="lg"
+                className="bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                asChild
+              >
+                <a
+                  href={`https://wa.me/${whatsappNumber}?text=${whatsappPrefill}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => onWhatsAppClick("home_personal_advisory")}
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Hablar por WhatsApp
+                </a>
+              </Button>
+            ) : null}
+
+            {hasSalesEmail ? (
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-cyan-200/50 text-cyan-100 hover:bg-cyan-200/10"
+                asChild
+              >
+                <a
+                  href={`mailto:${salesEmail}?subject=Asesoria%20personalizada%20de%20instalacion`}
+                  onClick={() => onSalesEmailClick("home_personal_advisory")}
+                >
+                  Pedir asesoria por correo
+                </a>
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
       <section className="rounded-3xl border border-white/15 bg-slate-900/60 p-6 sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200/90">
           Asistente de decision

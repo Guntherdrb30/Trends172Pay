@@ -56,13 +56,14 @@ export function InstallationSandbox() {
   const [copied, setCopied] = useState(false);
   const [copiedBlock, setCopiedBlock] = useState(false);
   const [placementType, setPlacementType] = useState<PlacementType>("home");
+  const [installLoading, setInstallLoading] = useState(false);
 
   const embedSnippet = useMemo(() => {
     if (!checkoutUrl) {
       return [
         "<a href=\"https://tu-dominio.com/checkout-generado\"",
         "   style=\"display:inline-block;padding:12px 20px;border-radius:10px;background:#0f172a;color:#fff;text-decoration:none;font-family:system-ui;\">",
-        "  Pagar con trends172 Pay",
+        "  Pagar instalacion y primer servicio (USD 100)",
         "</a>"
       ].join("\n");
     }
@@ -72,7 +73,7 @@ export function InstallationSandbox() {
       "   target=\"_blank\"",
       "   rel=\"noreferrer\"",
       "   style=\"display:inline-block;padding:12px 20px;border-radius:10px;background:#0f172a;color:#fff;text-decoration:none;font-family:system-ui;\">",
-      "  Pagar con trends172 Pay",
+      "  Pagar instalacion y primer servicio (USD 100)",
       "</a>"
     ].join("\n");
   }, [checkoutUrl]);
@@ -85,7 +86,7 @@ export function InstallationSandbox() {
       "<section id=\"trends172-pay-cta\" style=\"margin-top:24px;padding:16px;border:1px solid #1f2937;border-radius:12px;background:#0b1220;\">",
       "  <p style=\"margin:0 0 10px;font-size:14px;color:#cbd5e1;\">Paga de forma segura con trends172 Pay</p>",
       `  <a href="${href}" target="_blank" rel="noreferrer" style="display:inline-block;padding:12px 20px;border-radius:10px;background:#06b6d4;color:#0b1220;text-decoration:none;font-weight:700;font-family:system-ui;">`,
-      "    Pagar ahora",
+      "    Pagar instalacion y primer servicio (USD 100)",
       "  </a>",
       "</section>",
       "<!-- FIN BLOQUE BOTON TRENDS172 -->"
@@ -135,6 +136,46 @@ export function InstallationSandbox() {
     }
   }
 
+  async function payInstallationService() {
+    setInstallLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/public/installation-demo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          amount: 100,
+          currency: "USD",
+          description: "Pago de instalacion y primer servicio",
+          customerName,
+          customerEmail
+        })
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | (DemoSessionResponse & { error?: string })
+        | null;
+
+      if (!response.ok || !payload?.checkoutUrl) {
+        throw new Error(payload?.error || "No se pudo crear el checkout de instalacion.");
+      }
+
+      setCheckoutUrl(payload.checkoutUrl);
+      setBusinessCode(payload.businessCode);
+      window.location.href = payload.checkoutUrl;
+    } catch (err) {
+      console.error(err);
+      setError(
+        err instanceof Error ? err.message : "Error inesperado al iniciar pago de instalacion."
+      );
+    } finally {
+      setInstallLoading(false);
+    }
+  }
+
   async function copySnippet() {
     try {
       await navigator.clipboard.writeText(embedSnippet);
@@ -166,6 +207,32 @@ export function InstallationSandbox() {
           Esta pantalla simula tu pagina propia. Genera una sesion real y abre el checkout para
           validar el recorrido completo.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-emerald-300/30 bg-gradient-to-r from-emerald-900/20 via-slate-900 to-slate-900 p-5">
+        <h2 className="text-xl font-black text-white">
+          Flujo recomendado: instalar y pagar primer servicio
+        </h2>
+        <p className="mt-2 text-sm text-slate-300">
+          Paso 1: el cliente elige <strong>pagar instalacion</strong>. Paso 2: se crea checkout
+          por <strong>USD 100</strong>. Paso 3: luego de instalado, la plataforma opera con
+          <strong> 2.5% de comision por transaccion</strong>.
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Button
+            onClick={payInstallationService}
+            disabled={installLoading}
+            className="bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+          >
+            {installLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <PlayCircle className="mr-2 h-4 w-4" />
+            )}
+            Pagar instalacion y primer servicio (USD 100)
+          </Button>
+        </div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
