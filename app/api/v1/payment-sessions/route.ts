@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMerchantByApiKey } from "@/lib/merchantAppStore";
-import { createSession, listSessions } from "@/lib/paymentSessionStore";
+import {
+  createSession,
+  getSessionByMerchantAndIdempotencyKey,
+  listSessions
+} from "@/lib/paymentSessionStore";
 import type { MerchantApp, PaymentStatus } from "@/types/payment";
 
-// Helper de autenticación por API key para la API pública v1.
-// Todas las rutas bajo /api/v1/payment-sessions utilizan este helper
-// para resolver el MerchantApp asociado al header x-api-key.
 async function getAuthenticatedMerchant(request: NextRequest): Promise<{
   merchant: MerchantApp | null;
   response: NextResponse | null;
@@ -36,16 +37,29 @@ async function getAuthenticatedMerchant(request: NextRequest): Promise<{
   return { merchant, response: null };
 }
 
-// POST /api/v1/payment-sessions
-// Crea una PaymentSession pública asociada al MerchantApp resuelto
-// por x-api-key. Esta es la API sencilla que cualquier plataforma
-// puede usar para iniciar pagos en trends172 Pay.
+function buildCheckoutUrl(sessionId: string): string {
+  const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
+  return `${baseUrl.replace(/\/$/, "")}/pay?sessionId=${sessionId}`;
+}
+
+function normalizeIdempotencyKey(request: NextRequest): string | undefined {
+  const key = request.headers.get("idempotency-key")?.trim();
+  if (!key) return undefined;
+  return key.slice(0, 128);
+}
+
+function isIdempotencyUniqueError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.includes("idx_payment_sessions_merchant_idempotency");
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { merchant, response } = await getAuthenticatedMerchant(request);
     if (!merchant) return response!;
 
     const body = await request.json();
+    const idempotencyKey = normalizeIdempotencyKey(request);
 
     const {
       amount,
@@ -76,29 +90,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const session = await createSession({
-      merchantAppId: merchant.id,
-      originSystem,
-      amount,
-      currency,
-      description,
-      customerName,
-      customerEmail,
-      successUrl,
-      cancelUrl,
-      externalOrderId,
-      bankPaymentId: undefined
-    });
+    if (idempotencyKey) {
+      const existing = await getSessionByMerchantAndIdempotencyKey(
+        merchant.id,
+        idempotencyKey
+      );
+      if (existing) {
+        return NextResponse.json(
+          {
+            sessionId: existing.id,
+            checkoutUrl: buildCheckoutUrl(existing.id),
+            reused: true
+          },
+          { status: 200 }
+        );
+      }
+    }
 
-    const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
-    const checkoutUrl = `${baseUrl.replace(/\/$/, "")}/pay?sessionId=${
-      session.id
-    }`;
+    let session;
+    try {
+      session = await createSession({
+        merchantAppId: merchant.id,
+        originSystem,
+        amount,
+        currency,
+        description,
+        customerName,
+        customerEmail,
+        successUrl,
+        cancelUrl,
+        externalOrderId,
+        bankPaymentId: undefined,
+        providerCode: merchant.defaultProviderCode ?? "mercantil",
+        idempotencyKey
+      });
+    } catch (error) {
+      if (idempotencyKey && isIdempotencyUniqueError(error)) {
+        const existing = await getSessionByMerchantAndIdempotencyKey(
+          merchant.id,
+          idempotencyKey
+        );
+        if (existing) {
+          return NextResponse.json(
+            {
+              sessionId: existing.id,
+              checkoutUrl: buildCheckoutUrl(existing.id),
+              reused: true
+            },
+            { status: 200 }
+          );
+        }
+      }
+      throw error;
+    }
 
     return NextResponse.json(
       {
         sessionId: session.id,
-        checkoutUrl
+        checkoutUrl: buildCheckoutUrl(session.id)
       },
       { status: 201 }
     );
@@ -111,17 +160,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/v1/payment-sessions
-// Lista PaymentSessions asociadas al MerchantApp autenticado, con filtros
-// básicos. Pensado para que las plataformas integradas consulten su
-// propio historial de pagos sin ver datos de otros negocios.
 export async function GET(request: NextRequest) {
   try {
     const { merchant, response } = await getAuthenticatedMerchant(request);
     if (!merchant) return response!;
 
     const searchParams = request.nextUrl.searchParams;
-
     const statusParam = searchParams.get("status");
     const originSystem = searchParams.get("originSystem") ?? undefined;
     const fromDate = searchParams.get("fromDate") ?? undefined;
@@ -135,9 +179,7 @@ export async function GET(request: NextRequest) {
         "paid",
         "failed"
       ];
-      if (allowed.includes(statusParam as PaymentStatus)) {
-        status = statusParam as PaymentStatus;
-      } else {
+      if (!allowed.includes(statusParam as PaymentStatus)) {
         return NextResponse.json(
           {
             error:
@@ -146,6 +188,7 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         );
       }
+      status = statusParam as PaymentStatus;
     }
 
     const sessions = await listSessions({
@@ -156,8 +199,6 @@ export async function GET(request: NextRequest) {
       toDate
     });
 
-    // Respuesta resumida: información esencial del pago y comisiones,
-    // sin exponer detalles internos de la integración bancaria.
     const items = sessions.map((s) => ({
       id: s.id,
       businessCode: s.businessCode,
@@ -168,6 +209,7 @@ export async function GET(request: NextRequest) {
       platformFeeAmount: s.platformFeeAmount,
       merchantNetAmount: s.merchantNetAmount,
       externalOrderId: s.externalOrderId,
+      providerCode: s.providerCode,
       createdAt: s.createdAt
     }));
 

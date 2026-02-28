@@ -51,7 +51,7 @@ function resetLoginAttempts(key: string) {
 // POST /api/admin/login
 // Recibe un token (por formulario o JSON) y, si coincide con
 // ROOT_DASHBOARD_TOKEN, establece una cookie de sesión de admin y
-// redirige al dashboard (/admin/sessions).
+// redirige al dashboard (/admin/dashboard).
 export async function POST(request: NextRequest) {
   const now = Date.now();
   const clientKey = getClientKey(request);
@@ -112,12 +112,12 @@ export async function POST(request: NextRequest) {
   if (!token || token !== expected) {
     registerLoginFailure(clientKey, now);
 
-    const url = new URL("/admin/login", request.nextUrl.origin);
+    const url = new URL("/admin-login", request.nextUrl.origin);
     url.searchParams.set("error", "1");
     return NextResponse.redirect(url);
   }
 
-  const redirectUrl = new URL("/admin/sessions", request.nextUrl.origin);
+  const redirectUrl = new URL("/admin/dashboard", request.nextUrl.origin);
   const response = NextResponse.redirect(redirectUrl);
 
   response.cookies.set("admin_session", "active", {

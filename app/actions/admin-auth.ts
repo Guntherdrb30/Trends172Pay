@@ -3,23 +3,26 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const ADMIN_COOKIE_NAME = "admin_session_token";
-// Fallback to a hardcoded token if env is missing (for dev safety, though env is preferred)
-const ROOT_TOKEN = process.env.ROOT_DASHBOARD_TOKEN || "carpihogar172.";
+const ADMIN_COOKIE_NAME = "admin_session";
 
 export async function adminLogin(formData: FormData) {
     const password = formData.get("password") as string;
+    const expectedToken = process.env.ROOT_DASHBOARD_TOKEN;
+
+    if (!expectedToken) {
+        return { error: "ROOT_DASHBOARD_TOKEN no está configurado en el entorno." };
+    }
 
     // Simple check against the root token
-    if (password === ROOT_TOKEN) {
+    if (password === expectedToken) {
         // Set HTTP-only cookie
         const cookieStore = await cookies();
-        cookieStore.set(ADMIN_COOKIE_NAME, "true", {
+        cookieStore.set(ADMIN_COOKIE_NAME, "active", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
             path: "/",
-            maxAge: 60 * 60 * 24, // 24 hours
+            maxAge: 60 * 60 * 8, // 8 hours
         });
 
         redirect("/admin/dashboard");
@@ -36,6 +39,6 @@ export async function adminLogout() {
 
 export async function checkAdminSession() {
     const cookieStore = await cookies();
-    const hasSession = cookieStore.get(ADMIN_COOKIE_NAME);
-    return !!hasSession;
+    const session = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
+    return session === "active";
 }

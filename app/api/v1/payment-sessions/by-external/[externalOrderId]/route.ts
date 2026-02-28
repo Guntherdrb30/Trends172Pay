@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMerchantByApiKey } from "@/lib/merchantAppStore";
-import { listSessions } from "@/lib/paymentSessionStore";
+import { listSessionsByExternalOrderId } from "@/lib/paymentSessionStore";
 import type { MerchantApp } from "@/types/payment";
 
 async function getAuthenticatedMerchant(request: NextRequest): Promise<{
@@ -43,13 +43,10 @@ export async function GET(
 
     const { externalOrderId } = await params;
 
-    const sessions = await listSessions({
-      businessCode: merchant.businessCode
+    const filtered = await listSessionsByExternalOrderId({
+      businessCode: merchant.businessCode,
+      externalOrderId
     });
-
-    const filtered = sessions.filter(
-      (s) => s.externalOrderId === externalOrderId
-    );
 
     if (filtered.length === 0) {
       return NextResponse.json(
@@ -68,6 +65,8 @@ export async function GET(
       platformFeeAmount: s.platformFeeAmount,
       merchantNetAmount: s.merchantNetAmount,
       externalOrderId: s.externalOrderId,
+      providerCode: s.providerCode,
+      providerReference: s.providerReference,
       createdAt: s.createdAt
     }));
 

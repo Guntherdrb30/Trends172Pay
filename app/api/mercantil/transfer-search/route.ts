@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionById, updateSession } from "@/lib/paymentSessionStore";
-import { searchPaymentStatusForSession } from "@/lib/mercantilTransferSearchService";
+import {
+  getSessionById,
+  markSessionFailed,
+  markSessionPaid,
+  updateSession
+} from "@/lib/paymentSessionStore";
+import { getPaymentProvider } from "@/lib/payments/providerRouter";
 
 // POST /api/mercantil/transfer-search
-// Stub que simula la verificación de un pago en el banco (búsqueda
-// de transferencias / pagos acreditados).
-// - Recibe { sessionId }.
-// - Busca la PaymentSession.
-// - Llama al servicio de Mercantil (actualmente simulado).
-// - Actualiza el status de la sesión.
-// - Devuelve un resumen con el estado y algunos metadatos.
+// Compat route: conserva el path histórico, pero usa el router de proveedores.
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => null);
@@ -30,17 +29,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await searchPaymentStatusForSession(session);
+    const provider = getPaymentProvider(session.providerCode);
+    const result = await provider.queryPaymentStatus({ session });
 
-    const updated = await updateSession(session.id, {
-      status: result.status
-    });
+    let updated = session;
+    if (result.outcome === "approved") {
+      updated =
+        (await markSessionPaid(session.id, {
+          providerCode: result.providerCode,
+          providerReference: result.providerReference,
+          providerRawStatus: result.providerRawStatus,
+          bankPaymentId: result.providerReference ?? session.bankPaymentId,
+          providerMetadata: result.raw
+        })) ?? session;
+    } else if (result.outcome === "declined") {
+      updated =
+        (await markSessionFailed(session.id, {
+          providerCode: result.providerCode,
+          providerReference: result.providerReference,
+          providerRawStatus: result.providerRawStatus,
+          failureCode: result.code,
+          failureReason: result.message,
+          providerMetadata: result.raw
+        })) ?? session;
+    } else {
+      updated = await updateSession(session.id, {
+        providerCode: result.providerCode,
+        providerReference: result.providerReference ?? session.providerReference,
+        providerRawStatus: result.providerRawStatus ?? session.providerRawStatus,
+        failureCode: result.code ?? session.failureCode,
+        failureReason: result.message ?? session.failureReason,
+        providerMetadata: result.raw ?? session.providerMetadata,
+        lastProviderSyncAt: new Date().toISOString()
+      });
+    }
 
     return NextResponse.json({
       status: updated.status,
       businessCode: updated.businessCode,
       originSystem: updated.originSystem,
-      rawResponse: result.rawResponse
+      providerCode: updated.providerCode,
+      providerReference: updated.providerReference,
+      rawResponse: result.raw
     });
   } catch (error) {
     console.error("Error en POST /api/mercantil/transfer-search:", error);
@@ -50,4 +80,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

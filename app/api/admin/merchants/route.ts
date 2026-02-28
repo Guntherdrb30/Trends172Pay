@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       webhookUrl,
       webhookSecret,
       techStackHint,
+      defaultProviderCode,
       commissionPercent,
       payoutCurrency,
       payoutBankName,
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
       webhookUrl,
       webhookSecret,
       techStackHint,
+      defaultProviderCode,
       commissionPercent,
       payoutCurrency,
       payoutBankName,
@@ -115,4 +117,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

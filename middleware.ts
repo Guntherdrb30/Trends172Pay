@@ -5,8 +5,8 @@ export function middleware(request: NextRequest) {
 
   // Admin protection
   if (pathname.startsWith("/admin")) {
-    const session = request.cookies.get("admin_session_token")?.value;
-    if (!session) {
+    const session = request.cookies.get("admin_session")?.value;
+    if (session !== "active") {
       const loginUrl = new URL("/admin-login", request.url);
       return NextResponse.redirect(loginUrl);
     }

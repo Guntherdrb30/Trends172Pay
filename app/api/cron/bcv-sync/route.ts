@@ -1,24 +1,46 @@
-import { NextResponse } from 'next/server';
-import { syncBCVRate } from '@/lib/bcv-service';
+import { NextResponse } from "next/server";
+import { syncBCVRate } from "@/lib/bcv-service";
 
-export const dynamic = 'force-dynamic'; // Asegurar que no se cachee estáticamente
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-    // Verificar autorización básica para evitar abuso público si fuera necesario, 
-    // pero Vercel Cron usa header específico. Por simplicidad validamos execution.
+  const expectedSecret = process.env.CRON_SECRET;
+  const authHeader = request.headers.get("authorization");
+  const cronHeader = request.headers.get("x-cron-secret");
+  const bearerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice("Bearer ".length).trim()
+    : null;
 
-    const authHeader = request.headers.get('authorization');
-    // En Vercel Cron, la request viene de una IP interna, pero es buena práctica 
-    // verificar un CRON_SECRET si se configura. Por ahora lo dejamos abierto 
-    // o verificamos que sea una llamada interna si es posible.
-    // Para este MVP, lo dejamos abierto y confiamos en la configuración de Vercel.
+  if (!expectedSecret && process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { message: "CRON_SECRET no está configurado en el entorno." },
+      { status: 500 }
+    );
+  }
 
-    console.log('[BCV Cron] Starting sync...');
-    const result = await syncBCVRate();
+  if (
+    expectedSecret &&
+    bearerToken !== expectedSecret &&
+    cronHeader !== expectedSecret
+  ) {
+    return NextResponse.json(
+      { message: "No autorizado para ejecutar la tarea de cron." },
+      { status: 401 }
+    );
+  }
 
-    if (result.success) {
-        return NextResponse.json({ message: 'BCV rate synced', rate: result.rate }, { status: 200 });
-    } else {
-        return NextResponse.json({ message: 'Failed to sync BCV rate', error: result.error }, { status: 500 });
-    }
+  console.log("[BCV Cron] Starting sync...");
+  const result = await syncBCVRate();
+
+  if (result.success) {
+    return NextResponse.json(
+      { message: "BCV rate synced", rate: result.rate },
+      { status: 200 }
+    );
+  }
+
+  return NextResponse.json(
+    { message: "Failed to sync BCV rate", error: result.error },
+    { status: 500 }
+  );
 }

@@ -30,6 +30,7 @@ function mapRowToMerchant(row: any): MerchantApp {
     businessCode: row.business_code,
     displayName: row.display_name,
     apiKey: row.api_key,
+    defaultProviderCode: row.default_provider_code ?? "mercantil",
     logoUrl: row.logo_url ?? undefined,
     allowedDomains: row.allowed_domains ?? undefined,
     webhookUrl: row.webhook_url ?? undefined,
@@ -241,6 +242,7 @@ export async function createMerchant(
       email,
       password_hash,
       balance_currency,
+      default_provider_code,
       created_at,
       updated_at
     )
@@ -265,6 +267,7 @@ export async function createMerchant(
       ${data.email ?? null},
       ${data.passwordHash ?? null},
       ${data.balanceCurrency ?? "USD"},
+      ${data.defaultProviderCode ?? "mercantil"},
       ${now}::timestamptz,
       ${now}::timestamptz
     )
@@ -312,6 +315,7 @@ export async function updateMerchant(
       contact_name = ${merged.contactName ?? null},
       contact_email = ${merged.contactEmail ?? null},
       notes = ${merged.notes ?? null},
+      default_provider_code = ${merged.defaultProviderCode ?? "mercantil"},
       updated_at = ${now}::timestamptz
     WHERE id = ${id}
     RETURNING *
@@ -339,4 +343,3 @@ export async function regenerateApiKey(id: string): Promise<MerchantApp> {
 
   return mapRowToMerchant(rows[0]);
 }
-

@@ -90,6 +90,7 @@ export async function PATCH(
       webhookUrl,
       webhookSecret,
       techStackHint,
+      defaultProviderCode,
       contactName,
       contactEmail,
       notes
@@ -123,6 +124,10 @@ export async function PATCH(
       partial.webhookSecret = webhookSecret ?? undefined;
     if (typeof techStackHint === "string" || techStackHint === null)
       partial.techStackHint = techStackHint ?? undefined;
+    if (typeof defaultProviderCode === "string" || defaultProviderCode === null)
+      partial.defaultProviderCode = (defaultProviderCode ?? undefined) as
+        | "mercantil"
+        | undefined;
     if (typeof contactName === "string" || contactName === null)
       partial.contactName = contactName ?? undefined;
     if (typeof contactEmail === "string" || contactEmail === null)
@@ -140,4 +145,3 @@ export async function PATCH(
     );
   }
 }
-
