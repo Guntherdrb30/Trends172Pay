@@ -10,6 +10,39 @@ type DemoSessionResponse = {
   checkoutUrl: string;
 };
 
+type PlacementType = "home" | "product" | "checkout";
+
+const placementGuides: Record<
+  PlacementType,
+  {
+    label: string;
+    exactPlace: string;
+    check: string;
+  }
+> = {
+  home: {
+    label: "Pagina principal (Home)",
+    exactPlace:
+      "Dentro de <main>, justo despues de la seccion de planes/precios y antes del footer.",
+    check:
+      "Si al hacer scroll desde el hero ves el boton antes del footer, esta en el lugar correcto."
+  },
+  product: {
+    label: "Pagina de producto",
+    exactPlace:
+      "En la columna derecha del producto, debajo del precio y del boton 'Agregar al carrito'.",
+    check:
+      "El usuario debe poder ver precio, luego CTA de compra normal y despues el boton de pago directo."
+  },
+  checkout: {
+    label: "Pagina de checkout/carrito",
+    exactPlace:
+      "Dentro del resumen de orden, justo antes del boton final de confirmar compra.",
+    check:
+      "Si el cliente revisa subtotal y el siguiente elemento es tu boton de pago, esta bien ubicado."
+  }
+};
+
 export function InstallationSandbox() {
   const [amount, setAmount] = useState("25");
   const [currency, setCurrency] = useState("USD");
@@ -21,6 +54,8 @@ export function InstallationSandbox() {
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [businessCode, setBusinessCode] = useState("");
   const [copied, setCopied] = useState(false);
+  const [copiedBlock, setCopiedBlock] = useState(false);
+  const [placementType, setPlacementType] = useState<PlacementType>("home");
 
   const embedSnippet = useMemo(() => {
     if (!checkoutUrl) {
@@ -39,6 +74,21 @@ export function InstallationSandbox() {
       "   style=\"display:inline-block;padding:12px 20px;border-radius:10px;background:#0f172a;color:#fff;text-decoration:none;font-family:system-ui;\">",
       "  Pagar con trends172 Pay",
       "</a>"
+    ].join("\n");
+  }, [checkoutUrl]);
+
+  const placementBlockSnippet = useMemo(() => {
+    const href = checkoutUrl || "PEGA_AQUI_TU_CHECKOUT_URL";
+
+    return [
+      "<!-- INICIO BLOQUE BOTON TRENDS172 -->",
+      "<section id=\"trends172-pay-cta\" style=\"margin-top:24px;padding:16px;border:1px solid #1f2937;border-radius:12px;background:#0b1220;\">",
+      "  <p style=\"margin:0 0 10px;font-size:14px;color:#cbd5e1;\">Paga de forma segura con trends172 Pay</p>",
+      `  <a href="${href}" target="_blank" rel="noreferrer" style="display:inline-block;padding:12px 20px;border-radius:10px;background:#06b6d4;color:#0b1220;text-decoration:none;font-weight:700;font-family:system-ui;">`,
+      "    Pagar ahora",
+      "  </a>",
+      "</section>",
+      "<!-- FIN BLOQUE BOTON TRENDS172 -->"
     ].join("\n");
   }, [checkoutUrl]);
 
@@ -90,6 +140,16 @@ export function InstallationSandbox() {
       await navigator.clipboard.writeText(embedSnippet);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+  }
+
+  async function copyPlacementBlock() {
+    try {
+      await navigator.clipboard.writeText(placementBlockSnippet);
+      setCopiedBlock(true);
+      setTimeout(() => setCopiedBlock(false), 2000);
     } catch (err) {
       console.error("Copy failed:", err);
     }
@@ -214,6 +274,53 @@ export function InstallationSandbox() {
                 <CheckCircle2 className="h-4 w-4" /> Completa pago demo y valida resultado.
               </li>
             </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-amber-300/30 bg-slate-900/60 p-5">
+        <h2 className="text-lg font-bold text-white">3) Donde pegarlo exactamente en tu web</h2>
+        <p className="mt-2 text-sm text-slate-300">
+          Selecciona el tipo de pagina y pega el bloque en ese lugar exacto.
+        </p>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-[320px_1fr]">
+          <div className="space-y-3">
+            <label className="text-sm text-slate-300">
+              Tipo de pagina
+              <select
+                value={placementType}
+                onChange={(e) => setPlacementType(e.target.value as PlacementType)}
+                className="mt-1 h-10 w-full rounded-md border border-slate-700 bg-slate-950 px-3 text-slate-100"
+              >
+                <option value="home">{placementGuides.home.label}</option>
+                <option value="product">{placementGuides.product.label}</option>
+                <option value="checkout">{placementGuides.checkout.label}</option>
+              </select>
+            </label>
+
+            <div className="rounded-xl border border-amber-300/25 bg-amber-300/5 p-3 text-sm text-amber-100">
+              <p className="font-semibold">Ubicacion exacta</p>
+              <p className="mt-1">{placementGuides[placementType].exactPlace}</p>
+            </div>
+
+            <div className="rounded-xl border border-cyan-300/25 bg-cyan-300/5 p-3 text-sm text-cyan-100">
+              <p className="font-semibold">Validacion visual</p>
+              <p className="mt-1">{placementGuides[placementType].check}</p>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-200">Bloque listo para pegar</p>
+            <pre className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 text-xs text-slate-200">
+              {placementBlockSnippet}
+            </pre>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="outline" onClick={copyPlacementBlock}>
+                <Copy className="mr-2 h-4 w-4" />
+                {copiedBlock ? "Bloque copiado" : "Copiar bloque completo"}
+              </Button>
+            </div>
           </div>
         </div>
       </section>
