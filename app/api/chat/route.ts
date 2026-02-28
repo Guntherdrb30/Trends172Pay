@@ -1,48 +1,132 @@
 import { google } from "@ai-sdk/google";
-import { streamText, convertToCoreMessages } from "ai";
+import { generateText } from "ai";
+import { NextResponse } from "next/server";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+export const maxDuration = 60;
+
+type InstallationMessage = {
+  role: "user" | "assistant";
+  content: string;
+  imageUrl?: string;
+};
+
+function cleanText(value: unknown, maxLength: number): string {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, maxLength);
+}
+
+function isHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+const SYSTEM_PROMPT = `
+Eres "Asistente de Instalacion trends172".
+Tu trabajo es guiar la instalacion del boton de pago trends172 paso a paso.
+
+Reglas operativas:
+1. Prioriza pasos concretos y accionables.
+2. Si recibes una imagen, analizala y describe lo que ves antes de recomendar cambios.
+3. Si la imagen no es clara, pide otra captura con instrucciones exactas.
+4. Siempre responde con este formato:
+   - Diagnostico rapido
+   - Siguiente paso
+   - Checklist de validacion
+5. Enfocate en instalacion real:
+   - Obtener credenciales en /dashboard/integration
+   - Crear session de pago
+   - Redirigir a checkoutUrl
+   - Verificar resultado (paid o failed)
+6. Si detectas riesgo de exponer llaves secretas en frontend, advierte y da alternativa segura.
+7. Cuando sea util, recomienda probar en /instalacion-prueba para la primera instalacion.
+
+Contexto tecnico:
+- API base: /api/v1
+- Header requerido en backend del comercio: x-api-key
+- Flujo minimo:
+  1) POST /api/v1/payment-sessions
+  2) Recibir checkoutUrl
+  3) Redirigir cliente a checkoutUrl
+`;
 
 export async function POST(req: Request) {
-    const { messages } = await req.json();
+  try {
+    const body = (await req.json().catch(() => null)) as
+      | { messages?: InstallationMessage[] }
+      | null;
 
-    const systemContext = `
-    Eres "TrendBot", el asistente experto en integración de la pasarela de pagos trends172 Pay.
-    Tu objetivo es guiar a desarrolladores y dueños de negocios para conectar sus aplicaciones con nuestra plataforma.
+    const incoming = Array.isArray(body?.messages) ? body.messages : [];
+    const normalized = incoming
+      .slice(-10)
+      .map((message) => {
+        const role = message?.role === "assistant" ? "assistant" : "user";
+        const content = cleanText(message?.content, 4000);
+        const imageUrl = cleanText(message?.imageUrl, 1000);
+        return {
+          role,
+          content,
+          imageUrl: isHttpUrl(imageUrl) ? imageUrl : ""
+        } as InstallationMessage;
+      })
+      .filter((message) => message.content || message.imageUrl);
 
-    INFORMACIÓN TÉCNICA CLAVE:
-    1. Base URL de API: https://trends172-pay.vercel.app/api/v1
-    2. Autenticación: Header 'x-api-key' (se obtiene en el Dashboard > Integración).
-    3. Flujo de Pago:
-       a. El comercio (backend) llama a POST /api/v1/payment-sessions con { amount, currency, description, orderId, returnUrl... }
-       b. La API responde con una { checkoutUrl }.
-       c. El comercio redirige al usuario a esa URL.
-       d. El usuario paga (Tarjeta o Pago Móvil).
-       e. trends172 redirige al usuario de vuelta a 'returnUrl'.
-    4. Dashboard: Disponible en /dashboard (requiere autenticación). Muestra saldo y transacciones.
-
-    TONO Y ESTILO:
-    - Profesional pero cercano.
-    - Conciso: da respuestas directas.
-    - Si te piden código, usa ejemplos en JavaScript/Node.js o cURL.
-    - Si no sabes algo, sugiere contactar a soporte humano: soporte@trends172.com
-
-    INSTRUCCIONES DE INTERACCIÓN:
-    - Si el usuario dice "Hola", preséntate y ofrece ayuda para integrar la pasarela.
-    - Si preguntan por "credenciales", guíalos a /dashboard/integration.
-    - Si preguntan cómo funciona, explica los 3 pasos del flujo.
-  `;
-
-    try {
-        const result = await streamText({
-            model: google("gemini-1.5-flash"),
-            system: systemContext,
-            messages: convertToCoreMessages(messages)
-        });
-        return result.toTextStreamResponse();
-    } catch (error) {
-        console.error("Error in AI Chat:", error);
-        return new Response("Error procesando tu solicitud de IA.", { status: 500 });
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      return NextResponse.json(
+        {
+          error:
+            "Falta GOOGLE_GENERATIVE_AI_API_KEY. Configurala para habilitar el asistente de instalacion."
+        },
+        { status: 500 }
+      );
     }
+
+    const modelMessages = normalized.map((message) => {
+      if (message.role === "assistant") {
+        return {
+          role: "assistant" as const,
+          content: message.content
+        };
+      }
+
+      const parts: Array<
+        { type: "text"; text: string } | { type: "image"; image: string }
+      > = [];
+
+      if (message.content) {
+        parts.push({ type: "text", text: message.content });
+      }
+      if (message.imageUrl) {
+        parts.push({ type: "image", image: message.imageUrl });
+      }
+
+      if (parts.length === 1 && parts[0].type === "text") {
+        return {
+          role: "user" as const,
+          content: parts[0].text
+        };
+      }
+
+      return {
+        role: "user" as const,
+        content: parts.length
+          ? parts
+          : [{ type: "text" as const, text: "Necesito ayuda con la instalacion." }]
+      };
+    });
+
+    const result = await generateText({
+      model: google("gemini-1.5-flash"),
+      system: SYSTEM_PROMPT,
+      messages: modelMessages as any,
+      temperature: 0.2,
+      maxOutputTokens: 700
+    });
+
+    return NextResponse.json({ reply: result.text });
+  } catch (error) {
+    console.error("Error in /api/chat:", error);
+    return NextResponse.json(
+      { error: "No pude procesar la consulta del asistente." },
+      { status: 500 }
+    );
+  }
 }

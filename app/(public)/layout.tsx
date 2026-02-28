@@ -27,6 +27,9 @@ export default function PublicLayout({
             <a href="/pay/demo" className="transition-colors hover:text-white">
               Demo
             </a>
+            <a href="/instalacion-prueba" className="transition-colors hover:text-white">
+              Instalacion
+            </a>
             <a href="#contratar" className="transition-colors hover:text-white">
               Contratar
             </a>
