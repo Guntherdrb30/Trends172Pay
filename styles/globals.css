@@ -2,13 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --surface-base: #02050b;
+  --surface-soft: #071524;
+  --line-soft: rgba(255, 255, 255, 0.12);
+}
+
 html,
 body {
   height: 100%;
 }
 
 body {
-  background-color: #020617; /* slate-950 */
-  color: #e2e8f0; /* slate-200 */
+  margin: 0;
+  font-family: var(--font-body), sans-serif;
+  background-color: var(--surface-base);
+  color: #e2e8f0;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.02em;
+}
+
+* {
+  border-color: var(--line-soft);
+}

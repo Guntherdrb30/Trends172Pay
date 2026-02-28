@@ -1,17 +1,22 @@
 import { ChatWidget } from "@/components/ChatWidget";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Manrope, Space_Grotesk } from "next/font/google";
 import "../styles/globals.css";
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-sans"
+  variable: "--font-body"
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display"
 });
 
 export const metadata: Metadata = {
-  title: "trends172 Pay – Pasarela de pagos multi-negocio",
+  title: "trends172 Pay - Boton de Pago para Empresas",
   description:
-    "trends172 Pay es una pasarela de pagos centralizada y multi-negocio."
+    "Activa un boton de pago guiado para tu empresa. Mira el video, prueba el flujo y contrata con apoyo."
 };
 
 export default function RootLayout({
@@ -22,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${inter.variable} min-h-screen bg-slate-950 text-slate-100 antialiased`}
+        className={`${manrope.variable} ${spaceGrotesk.variable} min-h-screen bg-slate-950 text-slate-100 antialiased`}
       >
         {children}
         <ChatWidget />
@@ -30,4 +35,3 @@ export default function RootLayout({
     </html>
   );
 }
-
