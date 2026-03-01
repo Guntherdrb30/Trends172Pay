@@ -251,7 +251,7 @@ export function ClientJourneyExperience() {
           <Bot className="h-8 w-8 text-amber-300" />
           <h3 className="mt-4 text-xl font-bold text-white">2. Prueba real guiada</h3>
           <p className="mt-2 text-sm text-slate-300">
-            Abres el modo demo, simulas un pago y confirmas el recorrido real.
+            Abres el modo prueba y recorres el mismo checkout real que vera tu cliente.
           </p>
           <Button
             className="mt-4 bg-amber-300 text-slate-950 hover:bg-amber-200"
